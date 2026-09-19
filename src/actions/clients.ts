@@ -104,3 +104,20 @@ export async function eliminarCliente(id: string): Promise<ActionResult> {
   revalidatePath("/clientes");
   return { ok: true, data: undefined };
 }
+
+export async function buscarClientes(query: string): Promise<ActionResult<Client[]>> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+  if (!query || query.trim().length < 2) return { ok: true, data: [] };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("activo", true)
+    .or(`nombre.ilike.%${query}%,apellido.ilike.%${query}%,telefono.ilike.%${query}%`)
+    .limit(10);
+
+  if (error) return { ok: false, error: "No se pudo buscar." };
+  return { ok: true, data: data ?? [] };
+}

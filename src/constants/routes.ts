@@ -6,7 +6,7 @@ export const RUTAS = {
   dashboard: "/dashboard",
   clientes: "/clientes",
   cliente: (id: string) => `/clientes/${id}`,
-  turnos: "/turnos",
+  agenda: "/agenda",
   presupuestos: "/presupuestos",
   trabajos: "/trabajos",
   trabajosDisponibles: "/trabajos/disponibles",

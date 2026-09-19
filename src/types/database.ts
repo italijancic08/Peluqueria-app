@@ -39,6 +39,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_services: {
+        Row: {
+          appointment_id: string
+          duracion_snapshot: number
+          precio_snapshot: number
+          service_id: string
+        }
+        Insert: {
+          appointment_id: string
+          duracion_snapshot: number
+          precio_snapshot: number
+          service_id: string
+        }
+        Update: {
+          appointment_id?: string
+          duracion_snapshot?: number
+          precio_snapshot?: number
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_services_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          client_id: string
+          comentario_cliente: string | null
+          created_at: string
+          duracion_min: number
+          estado: Database["public"]["Enums"]["appointment_status"]
+          fecha_hora_fin: string
+          fecha_hora_inicio: string
+          id: string
+          numero: number
+          origen: Database["public"]["Enums"]["appointment_origin"]
+          profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          comentario_cliente?: string | null
+          created_at?: string
+          duracion_min: number
+          estado?: Database["public"]["Enums"]["appointment_status"]
+          fecha_hora_fin: string
+          fecha_hora_inicio: string
+          id?: string
+          numero?: number
+          origen?: Database["public"]["Enums"]["appointment_origin"]
+          profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          comentario_cliente?: string | null
+          created_at?: string
+          duracion_min?: number
+          estado?: Database["public"]["Enums"]["appointment_status"]
+          fecha_hora_fin?: string
+          fecha_hora_inicio?: string
+          id?: string
+          numero?: number
+          origen?: Database["public"]["Enums"]["appointment_origin"]
+          profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_hours: {
         Row: {
           activo: boolean
@@ -222,10 +318,49 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_blocks: {
+        Row: {
+          created_at: string
+          fecha_fin: string
+          fecha_inicio: string
+          id: string
+          motivo: string | null
+          profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fecha_fin: string
+          fecha_inicio: string
+          id?: string
+          motivo?: string | null
+          profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fecha_fin?: string
+          fecha_inicio?: string
+          id?: string
+          motivo?: string | null
+          profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_blocks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           activo: boolean
           created_at: string
+          cupo_maximo: number | null
           descripcion: string | null
           duracion_min: number
           id: string
@@ -236,6 +371,7 @@ export type Database = {
         Insert: {
           activo?: boolean
           created_at?: string
+          cupo_maximo?: number | null
           descripcion?: string | null
           duracion_min: number
           id?: string
@@ -246,6 +382,7 @@ export type Database = {
         Update: {
           activo?: boolean
           created_at?: string
+          cupo_maximo?: number | null
           descripcion?: string | null
           duracion_min?: number
           id?: string
@@ -260,8 +397,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bloqueos_dia: {
+        Args: { p_fecha: string }
+        Returns: {
+          fecha_fin: string
+          fecha_inicio: string
+          profile_id: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      turnos_ocupados_dia: {
+        Args: { p_fecha: string }
+        Returns: {
+          fecha_hora_fin: string
+          fecha_hora_inicio: string
+          profile_id: string
+          servicio_ids: string[]
+        }[]
+      }
     }
     Enums: {
       appointment_origin: "PUBLICO" | "INTERNO"

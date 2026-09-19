@@ -10,7 +10,7 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: RUTAS.dashboard },
   { label: "Clientes", href: RUTAS.clientes },
-  { label: "Turnos", href: RUTAS.turnos },
+  { label: "Turnos", href: RUTAS.agenda },
   { label: "Presupuestos", href: RUTAS.presupuestos },
   { label: "Trabajos", href: RUTAS.trabajos },
   { label: "Stock", href: RUTAS.stock },
