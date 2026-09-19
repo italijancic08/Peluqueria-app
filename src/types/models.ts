@@ -9,6 +9,8 @@ export type Service = Tables["services"]["Row"];
 export type Product = Tables["products"]["Row"];
 export type BusinessHours = Tables["business_hours"]["Row"];
 export type BusinessSettings = Tables["business_settings"]["Row"];
+export type Budget = Tables["budgets"]["Row"];
+export type BudgetItem = Tables["budget_items"]["Row"];
 
 export type UserRole = Enums["user_role"];
 export type UnitType = Enums["unit_type"];
