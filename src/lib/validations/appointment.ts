@@ -18,6 +18,7 @@ export const turnoInternoSchema = z.object({
   fechaHoraInicio: z.string().min(1, "Elegí un horario"),
   asignarme: z.boolean().default(false),
   comentario: z.string().trim().max(500).optional().or(z.literal("")),
+  budgetId: z.string().uuid().optional().nullable(),
 });
 
 export type TurnoInternoValues = z.infer<typeof turnoInternoSchema>;

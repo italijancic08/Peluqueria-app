@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EstadoPresupuestoActions } from "@/components/presupuestos/estado-presupuesto-actions";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFechaHora } from "@/lib/dates";
@@ -85,6 +87,14 @@ export default async function PresupuestoDetallePage({
         <div className="pt-2 border-t border-neutral-200">
           <h2 className="text-sm font-medium text-neutral-700 mb-2">Decisión del cliente</h2>
           <EstadoPresupuestoActions id={presupuesto.id} />
+        </div>
+      )}
+
+      {presupuesto.estado === "ACEPTADO" && (
+        <div className="pt-2 border-t border-neutral-200">
+          <Link href={`/agenda/nuevo?budgetId=${presupuesto.id}`}>
+            <Button>Crear turno para este presupuesto</Button>
+          </Link>
         </div>
       )}
     </div>

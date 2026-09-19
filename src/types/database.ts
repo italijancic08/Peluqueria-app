@@ -77,6 +77,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          budget_id: string | null
           client_id: string
           comentario_cliente: string | null
           created_at: string
@@ -91,6 +92,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          budget_id?: string | null
           client_id: string
           comentario_cliente?: string | null
           created_at?: string
@@ -105,6 +107,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          budget_id?: string | null
           client_id?: string
           comentario_cliente?: string | null
           created_at?: string
@@ -119,6 +122,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_client_id_fkey"
             columns: ["client_id"]
@@ -331,6 +341,93 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_commissions: {
+        Row: {
+          base_monto: number
+          created_at: string
+          id: string
+          monto: number
+          porcentaje_snapshot: number
+          profile_id: string
+          work_id: string
+        }
+        Insert: {
+          base_monto: number
+          created_at?: string
+          id?: string
+          monto: number
+          porcentaje_snapshot: number
+          profile_id: string
+          work_id: string
+        }
+        Update: {
+          base_monto?: number
+          created_at?: string
+          id?: string
+          monto?: number
+          porcentaje_snapshot?: number
+          profile_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_commissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_commissions_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          metodo: Database["public"]["Enums"]["payment_method"]
+          monto: number
+          work_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metodo: Database["public"]["Enums"]["payment_method"]
+          monto: number
+          work_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metodo?: Database["public"]["Enums"]["payment_method"]
+          monto?: number
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           activo: boolean
@@ -486,6 +583,210 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          cantidad: number
+          created_at: string
+          created_by: string | null
+          id: string
+          motivo: string | null
+          product_id: string
+          tipo: Database["public"]["Enums"]["stock_movement_type"]
+          work_id: string | null
+        }
+        Insert: {
+          cantidad: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          motivo?: string | null
+          product_id: string
+          tipo: Database["public"]["Enums"]["stock_movement_type"]
+          work_id?: string | null
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          motivo?: string | null
+          product_id?: string
+          tipo?: Database["public"]["Enums"]["stock_movement_type"]
+          work_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_items: {
+        Row: {
+          precio_snapshot: number
+          service_id: string
+          work_id: string
+        }
+        Insert: {
+          precio_snapshot: number
+          service_id: string
+          work_id: string
+        }
+        Update: {
+          precio_snapshot?: number
+          service_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_products: {
+        Row: {
+          cantidad: number
+          created_at: string
+          id: string
+          product_id: string
+          work_id: string
+        }
+        Insert: {
+          cantidad: number
+          created_at?: string
+          id?: string
+          product_id: string
+          work_id: string
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_products_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      works: {
+        Row: {
+          appointment_id: string
+          budget_id: string | null
+          client_id: string
+          cobrado_at: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["work_status"]
+          fecha_fin: string | null
+          fecha_inicio: string | null
+          id: string
+          numero: number
+          profile_id: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          budget_id?: string | null
+          client_id: string
+          cobrado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["work_status"]
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          numero?: number
+          profile_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          budget_id?: string | null
+          client_id?: string
+          cobrado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["work_status"]
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          numero?: number
+          profile_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "works_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "works_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "works_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "works_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -497,6 +798,13 @@ export type Database = {
           fecha_fin: string
           fecha_inicio: string
           profile_id: string
+        }[]
+      }
+      cobrar_trabajo: {
+        Args: { p_pagos: Json; p_work_id: string }
+        Returns: {
+          cobrado: boolean
+          total_pagado: number
         }[]
       }
       is_admin: { Args: never; Returns: boolean }

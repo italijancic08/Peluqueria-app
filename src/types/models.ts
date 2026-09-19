@@ -11,6 +11,12 @@ export type BusinessHours = Tables["business_hours"]["Row"];
 export type BusinessSettings = Tables["business_settings"]["Row"];
 export type Budget = Tables["budgets"]["Row"];
 export type BudgetItem = Tables["budget_items"]["Row"];
+export type Work = Tables["works"]["Row"];
+export type WorkItem = Tables["work_items"]["Row"];
+export type WorkProduct = Tables["work_products"]["Row"];
+export type StockMovement = Tables["stock_movements"]["Row"];
+export type Payment = Tables["payments"]["Row"];
+export type EmployeeCommission = Tables["employee_commissions"]["Row"];
 
 export type UserRole = Enums["user_role"];
 export type UnitType = Enums["unit_type"];

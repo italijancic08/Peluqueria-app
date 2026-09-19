@@ -10,10 +10,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { Client, Service } from "@/types/models";
 
-export function TurnoInternoForm({ servicios }: { servicios: Service[] }) {
+type PresupuestoPrefill = {
+  budgetId: string;
+  clientId: string;
+  clientLabel: string;
+  servicioIds: string[];
+};
+
+type Props = {
+  servicios: Service[];
+  presupuesto?: PresupuestoPrefill | null;
+};
+
+export function TurnoInternoForm({ servicios, presupuesto }: Props) {
   const router = useRouter();
-  const [cliente, setCliente] = useState<Client | null>(null);
-  const [servicioIds, setServicioIds] = useState<string[]>([]);
+  const [cliente, setCliente] = useState<Client | null>(
+    presupuesto
+      ? ({
+          id: presupuesto.clientId,
+          nombre: "",
+          apellido: presupuesto.clientLabel,
+          telefono: "",
+        } as Client)
+      : null
+  );
+  const [servicioIds, setServicioIds] = useState<string[]>(presupuesto?.servicioIds ?? []);
   const [slot, setSlot] = useState<string | null>(null);
   const [asignarme, setAsignarme] = useState(false);
   const [comentario, setComentario] = useState("");
@@ -24,16 +45,30 @@ export function TurnoInternoForm({ servicios }: { servicios: Service[] }) {
     e.preventDefault();
     setError(null);
 
-    if (!cliente) { setError("Elegí un cliente."); return; }
-    if (!slot) { setError("Elegí un horario."); return; }
+    if (!cliente) {
+      setError("Elegí un cliente.");
+      return;
+    }
+    if (!slot) {
+      setError("Elegí un horario.");
+      return;
+    }
 
     setEnviando(true);
     const resultado = await crearTurnoInterno({
-      clientId: cliente.id, servicioIds, fechaHoraInicio: slot, asignarme, comentario,
+      clientId: cliente.id,
+      servicioIds,
+      fechaHoraInicio: slot,
+      asignarme,
+      comentario,
+      budgetId: presupuesto?.budgetId ?? null,
     });
     setEnviando(false);
 
-    if (!resultado.ok) { setError(resultado.error); return; }
+    if (!resultado.ok) {
+      setError(resultado.error);
+      return;
+    }
 
     router.push("/agenda");
     router.refresh();
@@ -47,9 +82,21 @@ export function TurnoInternoForm({ servicios }: { servicios: Service[] }) {
         </div>
       )}
 
+      {presupuesto && (
+        <p className="text-sm text-neutral-500">
+          Turno para el presupuesto aceptado — cliente y servicios ya cargados.
+        </p>
+      )}
+
       <div>
         <h2 className="text-sm font-medium text-neutral-700 mb-2">Cliente</h2>
-        <SelectorCliente value={cliente} onChange={setCliente} />
+        {presupuesto ? (
+          <div className="rounded-md border border-neutral-200 px-3 py-2 text-sm">
+            {presupuesto.clientLabel}
+          </div>
+        ) : (
+          <SelectorCliente value={cliente} onChange={setCliente} />
+        )}
       </div>
 
       <div>
@@ -67,7 +114,12 @@ export function TurnoInternoForm({ servicios }: { servicios: Service[] }) {
         Asignarme este turno
       </label>
 
-      <Textarea placeholder="Comentario (opcional)" rows={2} value={comentario} onChange={(e) => setComentario(e.target.value)} />
+      <Textarea
+        placeholder="Comentario (opcional)"
+        rows={2}
+        value={comentario}
+        onChange={(e) => setComentario(e.target.value)}
+      />
 
       <Button type="submit" disabled={enviando}>
         {enviando ? "Creando..." : "Crear turno"}

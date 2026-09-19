@@ -8,12 +8,7 @@ import { calcularSlotsDelDia } from "@/lib/calculations/availability";
 import { normalizarTelefono } from "@/lib/format";
 import { reservaPublicaSchema, turnoInternoSchema } from "@/lib/validations/appointment";
 import type { ActionResult } from "@/types/models";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
 
-type Cliente = SupabaseClient<Database>;
-
-/** Callable por cualquiera (anónimo incluido): solo lee horarios y ocupación. */
 export async function obtenerDisponibilidad(
   fechaISO: string,
   servicioIds: string[]
@@ -78,11 +73,10 @@ export async function obtenerDisponibilidad(
 
 /**
  * Vuelve a validar capacidad general y cupo por servicio justo antes de
- * insertar, para evitar que dos personas tomen el mismo hueco casi a la vez.
- * Se usa tanto en la reserva pública como en la interna.
+ * insertar. `cliente` puede ser el cliente normal o el admin (service_role).
  */
 async function verificarHorarioDisponible(
-  cliente: Cliente,
+  cliente: any,
   fechaISO: string,
   inicio: Date,
   fin: Date,
@@ -98,7 +92,7 @@ async function verificarHorarioDisponible(
     return { ok: false, error: "No se pudo leer la configuración del negocio." };
   }
 
-  const solapados = (ocupados ?? []).filter((o) => {
+  const solapados = (ocupados ?? []).filter((o: any) => {
     const oIni = new Date(o.fecha_hora_inicio);
     const oFin = new Date(o.fecha_hora_fin);
     return inicio < oFin && oIni < fin;
@@ -110,7 +104,7 @@ async function verificarHorarioDisponible(
 
   for (const s of serviciosInfo ?? []) {
     if (s.cupo_maximo == null) continue;
-    const ocupadosDeEsteServicio = solapados.filter((o) =>
+    const ocupadosDeEsteServicio = solapados.filter((o: any) =>
       (o.servicio_ids ?? []).includes(s.id)
     ).length;
     if (ocupadosDeEsteServicio >= s.cupo_maximo) {
@@ -124,7 +118,6 @@ async function verificarHorarioDisponible(
   return { ok: true };
 }
 
-/** Reserva pública: usa service_role porque el cliente no tiene sesión. */
 export async function crearTurnoPublico(
   valores: unknown
 ): Promise<ActionResult<{ numero: number }>> {
@@ -211,10 +204,28 @@ export async function crearTurnoPublico(
     return { ok: false, error: "El turno se creó pero hubo un problema con los servicios. Contactanos." };
   }
 
+  const totalTrabajo = servicios.reduce((acc, s) => acc + Number(s.precio), 0);
+  const { data: trabajo, error: errorTrabajo } = await admin
+    .from("works")
+    .insert({ client_id: clientId, appointment_id: turno.id, total: totalTrabajo })
+    .select("id")
+    .single();
+
+  if (errorTrabajo || !trabajo) {
+    return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo. Contactanos." };
+  }
+
+  const { error: errorWorkItems } = await admin.from("work_items").insert(
+    servicios.map((s) => ({ work_id: trabajo.id, service_id: s.id, precio_snapshot: s.precio }))
+  );
+
+  if (errorWorkItems) {
+    return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo. Contactanos." };
+  }
+
   return { ok: true, data: { numero: turno.numero } };
 }
 
-/** Turno cargado por un empleado desde el panel. */
 export async function crearTurnoInterno(
   valores: unknown
 ): Promise<ActionResult<{ id: string }>> {
@@ -230,7 +241,7 @@ export async function crearTurnoInterno(
     };
   }
 
-  const { clientId, servicioIds, fechaHoraInicio, asignarme, comentario } = parsed.data;
+  const { clientId, servicioIds, fechaHoraInicio, asignarme, comentario, budgetId } = parsed.data;
   const supabase = await createClient();
 
   const { data: servicios, error: errorServicios } = await supabase
@@ -261,6 +272,7 @@ export async function crearTurnoInterno(
       comentario_cliente: comentario || null,
       origen: "INTERNO",
       estado: "CONFIRMADO",
+      budget_id: budgetId || null,
     })
     .select("id")
     .single();
@@ -285,7 +297,36 @@ export async function crearTurnoInterno(
     return { ok: false, error: "El turno se creó pero hubo un problema con los servicios." };
   }
 
+  const totalTrabajo = servicios.reduce((acc, s) => acc + Number(s.precio), 0);
+  const { data: trabajo, error: errorTrabajo } = await supabase
+    .from("works")
+    .insert({
+      client_id: clientId,
+      appointment_id: turno.id,
+      budget_id: budgetId || null,
+      total: totalTrabajo,
+      ...(asignarme
+        ? { profile_id: perfil.id, estado: "TOMADO", fecha_inicio: new Date().toISOString() }
+        : {}),
+    })
+    .select("id")
+    .single();
+
+  if (errorTrabajo || !trabajo) {
+    return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo." };
+  }
+
+  const { error: errorWorkItems } = await supabase.from("work_items").insert(
+    servicios.map((s) => ({ work_id: trabajo.id, service_id: s.id, precio_snapshot: s.precio }))
+  );
+
+  if (errorWorkItems) {
+    return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo." };
+  }
+
   revalidatePath("/agenda");
+  revalidatePath("/trabajos");
+  revalidatePath("/trabajos/disponibles");
   return { ok: true, data: { id: turno.id } };
 }
 
@@ -301,6 +342,14 @@ export async function cancelarTurno(id: string): Promise<ActionResult> {
 
   if (error) return { ok: false, error: "No se pudo cancelar el turno." };
 
+  await supabase
+    .from("works")
+    .update({ estado: "CANCELADO" })
+    .eq("appointment_id", id)
+    .in("estado", ["DISPONIBLE", "TOMADO"]);
+
   revalidatePath("/agenda");
+  revalidatePath("/trabajos");
+  revalidatePath("/trabajos/disponibles");
   return { ok: true, data: undefined };
 }
