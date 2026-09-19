@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { servicioSchema, type ServicioFormValues } from "@/lib/validations/service";
+import { z } from "zod";
+
+import {
+  servicioSchema,
+  type ServicioFormValues,
+} from "@/lib/validations/service";
+
 import { crearServicio, actualizarServicio } from "@/actions/services";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,14 +34,23 @@ export function ServicioForm(props: ServicioFormProps) {
           precio: Number(props.servicio.precio),
           duracion_min: props.servicio.duracion_min,
         }
-      : { nombre: "", descripcion: "", precio: 0, duracion_min: 30 };
+      : {
+          nombre: "",
+          descripcion: "",
+          precio: 0,
+          duracion_min: 30,
+        };
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<ServicioFormValues>({
+  } = useForm<
+    z.input<typeof servicioSchema>,
+    any,
+    z.output<typeof servicioSchema>
+  >({
     resolver: zodResolver(servicioSchema),
     defaultValues: valoresIniciales,
   });
@@ -50,13 +65,19 @@ export function ServicioForm(props: ServicioFormProps) {
 
     if (!resultado.ok) {
       setErrorGeneral(resultado.error);
+
       if (resultado.fieldErrors) {
-        for (const [campo, mensajes] of Object.entries(resultado.fieldErrors)) {
+        for (const [campo, mensajes] of Object.entries(
+          resultado.fieldErrors
+        )) {
           if (mensajes?.[0]) {
-            setError(campo as keyof ServicioFormValues, { message: mensajes[0] });
+            setError(campo as keyof ServicioFormValues, {
+              message: mensajes[0],
+            });
           }
         }
       }
+
       return;
     }
 
@@ -73,10 +94,16 @@ export function ServicioForm(props: ServicioFormProps) {
       )}
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-neutral-700">Nombre</label>
+        <label className="text-sm font-medium text-neutral-700">
+          Nombre
+        </label>
+
         <Input {...register("nombre")} />
+
         {errors.nombre && (
-          <p className="text-xs text-red-600">{errors.nombre.message}</p>
+          <p className="text-xs text-red-600">
+            {errors.nombre.message}
+          </p>
         )}
       </div>
 
@@ -84,24 +111,50 @@ export function ServicioForm(props: ServicioFormProps) {
         <label className="text-sm font-medium text-neutral-700">
           Descripción (opcional)
         </label>
+
         <Textarea rows={2} {...register("descripcion")} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-neutral-700">Precio ($)</label>
-          <Input type="number" step="0.01" min="0" {...register("precio")} />
+          <label className="text-sm font-medium text-neutral-700">
+            Precio ($)
+          </label>
+
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            {...register("precio", {
+              valueAsNumber: true,
+            })}
+          />
+
           {errors.precio && (
-            <p className="text-xs text-red-600">{errors.precio.message}</p>
+            <p className="text-xs text-red-600">
+              {errors.precio.message}
+            </p>
           )}
         </div>
+
         <div className="space-y-1">
           <label className="text-sm font-medium text-neutral-700">
             Duración (minutos)
           </label>
-          <Input type="number" step="5" min="5" {...register("duracion_min")} />
+
+          <Input
+            type="number"
+            step="5"
+            min="5"
+            {...register("duracion_min", {
+              valueAsNumber: true,
+            })}
+          />
+
           {errors.duracion_min && (
-            <p className="text-xs text-red-600">{errors.duracion_min.message}</p>
+            <p className="text-xs text-red-600">
+              {errors.duracion_min.message}
+            </p>
           )}
         </div>
       </div>
@@ -111,10 +164,15 @@ export function ServicioForm(props: ServicioFormProps) {
           {isSubmitting
             ? "Guardando..."
             : props.modo === "crear"
-            ? "Crear servicio"
-            : "Guardar cambios"}
+              ? "Crear servicio"
+              : "Guardar cambios"}
         </Button>
-        <Button type="button" variant="secondary" onClick={() => router.back()}>
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => router.back()}
+        >
           Cancelar
         </Button>
       </div>
