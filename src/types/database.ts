@@ -299,6 +299,64 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          id: string
+          metodo: Database["public"]["Enums"]["payment_method"]
+          monto: number
+          payment_id: string | null
+          tipo: Database["public"]["Enums"]["cash_movement_type"]
+          work_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          metodo: Database["public"]["Enums"]["payment_method"]
+          monto: number
+          payment_id?: string | null
+          tipo: Database["public"]["Enums"]["cash_movement_type"]
+          work_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          metodo?: Database["public"]["Enums"]["payment_method"]
+          monto?: number
+          payment_id?: string | null
+          tipo?: Database["public"]["Enums"]["cash_movement_type"]
+          work_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           activo: boolean
@@ -349,6 +407,7 @@ export type Database = {
           monto: number
           porcentaje_snapshot: number
           profile_id: string
+          settlement_id: string | null
           work_id: string
         }
         Insert: {
@@ -358,6 +417,7 @@ export type Database = {
           monto: number
           porcentaje_snapshot: number
           profile_id: string
+          settlement_id?: string | null
           work_id: string
         }
         Update: {
@@ -367,6 +427,7 @@ export type Database = {
           monto?: number
           porcentaje_snapshot?: number
           profile_id?: string
+          settlement_id?: string | null
           work_id?: string
         }
         Relationships: [
@@ -378,10 +439,68 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employee_commissions_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "employee_settlements"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "employee_commissions_work_id_fkey"
             columns: ["work_id"]
             isOneToOne: false
             referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_settlements: {
+        Row: {
+          created_at: string
+          estado: Database["public"]["Enums"]["settlement_status"]
+          fecha_pago: string | null
+          id: string
+          paid_by: string | null
+          profile_id: string
+          semana_fin: string
+          semana_inicio: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["settlement_status"]
+          fecha_pago?: string | null
+          id?: string
+          paid_by?: string | null
+          profile_id: string
+          semana_fin: string
+          semana_inicio: string
+          total: number
+        }
+        Update: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["settlement_status"]
+          fecha_pago?: string | null
+          id?: string
+          paid_by?: string | null
+          profile_id?: string
+          semana_fin?: string
+          semana_inicio?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_settlements_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_settlements_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -809,6 +928,18 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      liquidar_semana: {
+        Args: {
+          p_profile_id: string
+          p_semana_fin: string
+          p_semana_inicio: string
+        }
+        Returns: string
+      }
+      marcar_liquidacion_pagada: {
+        Args: { p_settlement_id: string }
+        Returns: undefined
+      }
       turnos_ocupados_dia: {
         Args: { p_fecha: string }
         Returns: {
