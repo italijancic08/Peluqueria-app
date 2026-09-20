@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+h1, h2, h3 {
+  font-family: var(--font-display), serif;
+}
+
+::selection {
+  background-color: #C98A3E;
+  color: #FFFFFF;
+}

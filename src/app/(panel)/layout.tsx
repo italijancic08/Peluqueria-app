@@ -14,7 +14,7 @@ export default async function PanelLayout({
       <Sidebar rol={profile.rol} />
       <div className="flex-1 flex flex-col">
         <Topbar nombre={`${profile.nombre} ${profile.apellido}`} />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 bg-[#F6E4D3]">{children}</main>
       </div>
     </div>
   );
