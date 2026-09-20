@@ -10,6 +10,7 @@ import type { UserRole } from "@/types/models";
 export function Sidebar({ rol }: { rol: UserRole }) {
   const pathname = usePathname();
   const items = navParaRol(rol);
+  const primerIndiceAdmin = items.findIndex((item) => item.soloAdmin);
 
   return (
     <aside className="w-60 shrink-0 bg-white border-r border-[#EDD9C4] p-4 flex flex-col">
@@ -22,23 +23,27 @@ export function Sidebar({ rol }: { rol: UserRole }) {
         </span>
       </div>
       <nav className="space-y-1">
-        {items.map((item) => {
+        {items.map((item, index) => {
           const activo = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                activo
-                  ? "bg-[#6B4635] text-white font-medium"
-                  : "text-[#9C8577] hover:bg-[#F6E4D3] hover:text-[#4A3428]"
+            <div key={item.href}>
+              {index === primerIndiceAdmin && (
+                <div className="my-2 border-t border-dashed border-[#EDD9C4]" />
               )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  activo
+                    ? "bg-[#6B4635] text-white font-medium"
+                    : "text-[#9C8577] hover:bg-[#F6E4D3] hover:text-[#4A3428]"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </Link>
+            </div>
           );
         })}
       </nav>
