@@ -103,7 +103,12 @@ export default async function TrabajoDetallePage({
         </div>
       )}
 
-      <p className="text-xs text-neutral-400">Creado el {mostrarFechaHora(trabajo.created_at)}</p>
+      <div className="flex items-center justify-between pt-2">
+        <p className="text-xs text-neutral-400">Creado el {mostrarFechaHora(trabajo.created_at)}</p>
+        <a href={`/api/documentos/${trabajo.id}`} className="text-sm text-[#6B4635] underline" download>
+          Descargar comprobante (PDF)
+        </a>
+      </div>
     </div>
   );
 }

@@ -66,6 +66,9 @@ export default async function CajaPage({
 
       <div className="flex items-center justify-between">
         <SelectorMesCaja mes={mesConsulta} />
+        <a href={`/api/export/caja?mes=${mesConsulta}`} className="text-sm text-[#6B4635] underline">
+          Descargar Excel
+        </a>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -118,10 +121,7 @@ export default async function CajaPage({
                   <Td>{m.descripcion ?? "—"}</Td>
                   <Td>
                     {m.works ? (
-                      <Link
-                        href={`/trabajos/${m.work_id}`}
-                        className="text-neutral-900 underline"
-                      >
+                      <Link href={`/trabajos/${m.work_id}`} className="text-neutral-900 underline">
                         #{m.works.numero}
                       </Link>
                     ) : (
@@ -130,7 +130,7 @@ export default async function CajaPage({
                   </Td>
                   <Td className={esIngreso ? "text-green-700 font-medium" : "text-red-700 font-medium"}>
                     {esIngreso ? "+" : "-"}
-                    {formatearPesos(monto_abs(m.monto))}
+                    {formatearPesos(Math.abs(Number(m.monto)))}
                   </Td>
                 </Tr>
               );
@@ -140,8 +140,4 @@ export default async function CajaPage({
       )}
     </div>
   );
-}
-
-function monto_abs(monto: number) {
-  return Math.abs(Number(monto));
 }

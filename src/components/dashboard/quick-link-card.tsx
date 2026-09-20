@@ -12,14 +12,14 @@ export function QuickLinkCard({ href, label, descripcion, icon: Icon }: Props) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-[#EDD9C4] bg-[#F3E5D6] p-4 transition-colors hover:bg-[#E8C7A6]"
+      className="flex items-center gap-3 rounded-xl border border-[#6B4635] bg-[#6B4635] p-4 transition-colors hover:bg-[#5A3A2C]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
-        <Icon className="h-5 w-5 text-[#6B4635]" />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
+        <Icon className="h-5 w-5 text-white" />
       </span>
       <div>
-        <p className="text-sm font-medium text-[#4A3428]">{label}</p>
-        <p className="text-xs text-[#9C8577]">{descripcion}</p>
+        <p className="text-sm font-medium text-white">{label}</p>
+        <p className="text-xs text-[#E8D9CC]">{descripcion}</p>
       </div>
     </Link>
   );

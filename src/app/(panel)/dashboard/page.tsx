@@ -73,7 +73,7 @@ export default async function DashboardPage() {
             <h1 className="text-xl font-semibold text-[#4A3428]">Dashboard</h1>
             <p className="text-sm text-[#9C8577]">Resumen de hoy.</p>
           </div>
-          <span className="flex items-center gap-2 rounded-lg border border-dashed border-[#EDD9C4] px-3 py-2 text-xs text-[#C4B6A8]">
+          <span className="flex items-center gap-2 rounded-lg bg-[#6B4635] px-3 py-2 text-xs text-white">
             <FileText className="h-4 w-4" />
             Documentos (próximamente)
           </span>
