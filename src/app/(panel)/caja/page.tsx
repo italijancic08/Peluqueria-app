@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Table, Thead, Tbody, Tr, Th } from "@/components/ui/table";
 import { SelectorMesCaja } from "@/components/caja/selector-mes-caja";
 import { MovimientoManualForm } from "@/components/caja/movimiento-manual-form";
+import { FilaMovimiento } from "@/components/caja/fila-movimiento";
 import { formatearPesos } from "@/lib/format";
-import { MEDIO_PAGO } from "@/constants/labels";
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -106,35 +104,9 @@ export default async function CajaPage({
             </Tr>
           </Thead>
           <Tbody>
-            {movimientos.map((m) => {
-              const dia = new Date(m.created_at).getDate();
-              const esIngreso = m.tipo === "INGRESO";
-              return (
-                <Tr key={m.id}>
-                  <Td>{dia}</Td>
-                  <Td>
-                    <Badge variant={esIngreso ? "success" : "danger"}>
-                      {esIngreso ? "Ingreso" : "Egreso"}
-                    </Badge>
-                  </Td>
-                  <Td>{MEDIO_PAGO[m.metodo as keyof typeof MEDIO_PAGO]}</Td>
-                  <Td>{m.descripcion ?? "—"}</Td>
-                  <Td>
-                    {m.works ? (
-                      <Link href={`/trabajos/${m.work_id}`} className="text-neutral-900 underline">
-                        #{m.works.numero}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </Td>
-                  <Td className={esIngreso ? "text-green-700 font-medium" : "text-red-700 font-medium"}>
-                    {esIngreso ? "+" : "-"}
-                    {formatearPesos(Math.abs(Number(m.monto)))}
-                  </Td>
-                </Tr>
-              );
-            })}
+            {movimientos.map((m) => (
+              <FilaMovimiento key={m.id} movimiento={m as any} />
+            ))}
           </Tbody>
         </Table>
       )}

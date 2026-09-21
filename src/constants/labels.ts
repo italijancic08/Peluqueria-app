@@ -24,7 +24,8 @@ export const ESTADO_TRABAJO = {
 export const MEDIO_PAGO = {
   EFECTIVO: "Efectivo",
   TRANSFERENCIA: "Transferencia",
-  TARJETA: "Tarjeta",
+  TARJETA_CREDITO: "Tarjeta de crédito",
+  TARJETA_DEBITO: "Tarjeta de débito",
 } as const;
 
 export const UNIDAD = {

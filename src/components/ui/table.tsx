@@ -33,9 +33,11 @@ export function Th({ children }: { children?: React.ReactNode }) {
 export function Td({
   children,
   className,
+  colSpan,
 }: {
   children: React.ReactNode;
   className?: string;
+  colSpan?: number;
 }) {
-  return <td className={cn("px-4 py-3 text-[#4A3428]", className)}>{children}</td>;
+  return <td colSpan={colSpan} className={cn("px-4 py-3 text-[#4A3428]", className)}>{children}</td>;
 }

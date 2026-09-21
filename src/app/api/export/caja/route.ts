@@ -14,7 +14,8 @@ function primerYUltimoDia(mesISO: string) {
 const MEDIO_PAGO: Record<string, string> = {
   EFECTIVO: "Efectivo",
   TRANSFERENCIA: "Transferencia",
-  TARJETA: "Tarjeta",
+  TARJETA_CREDITO: "Tarjeta de crédito",
+  TARJETA_DEBITO: "Tarjeta de débito",
 };
 
 export async function GET(request: Request) {

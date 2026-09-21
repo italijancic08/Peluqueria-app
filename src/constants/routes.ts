@@ -14,6 +14,7 @@ export const RUTAS = {
   stock: "/stock",
   caja: "/caja",
   liquidaciones: "/liquidaciones",
+  documentos: "/documentos",
 
   empleados: "/empleados",
   servicios: "/servicios",

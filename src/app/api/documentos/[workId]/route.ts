@@ -97,11 +97,20 @@ export async function GET(
   linea(formatearPesos(trabajo.total), { size: 12, bold: true, x: 450 });
   y -= 28;
 
+  const MEDIO_PAGO_LABEL: Record<string, string> = {
+    EFECTIVO: "Efectivo",
+    TRANSFERENCIA: "Transferencia",
+    TARJETA_CREDITO: "Tarjeta de crédito",
+    TARJETA_DEBITO: "Tarjeta de débito",
+  };
+
   if (pagos && pagos.length > 0) {
     linea("Pagos", { size: 11, bold: true });
     y -= 18;
     for (const p of pagos) {
-      linea(p.metodo, { size: 10 });
+      const etiqueta = MEDIO_PAGO_LABEL[p.metodo] ?? p.metodo;
+      const conCuotas = (p as any).cuotas ? `${etiqueta} (${(p as any).cuotas} cuotas)` : etiqueta;
+      linea(conCuotas, { size: 10 });
       linea(formatearPesos(p.monto), { size: 10, x: 450 });
       y -= 16;
     }

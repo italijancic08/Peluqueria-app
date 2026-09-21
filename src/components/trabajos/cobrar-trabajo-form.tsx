@@ -8,18 +8,22 @@ import { Input } from "@/components/ui/input";
 import { formatearPesos } from "@/lib/format";
 import { MEDIO_PAGO } from "@/constants/labels";
 
-type PagoItem = { metodo: keyof typeof MEDIO_PAGO; monto: string };
+type PagoItem = {
+  metodo: keyof typeof MEDIO_PAGO;
+  monto: string;
+  cuotas: string;
+};
 
 export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPendiente: number }) {
   const router = useRouter();
   const [items, setItems] = useState<PagoItem[]>([
-    { metodo: "EFECTIVO", monto: String(saldoPendiente) },
+    { metodo: "EFECTIVO", monto: String(saldoPendiente), cuotas: "" },
   ]);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   function agregarItem() {
-    setItems([...items, { metodo: "EFECTIVO", monto: "" }]);
+    setItems([...items, { metodo: "EFECTIVO", monto: "", cuotas: "" }]);
   }
 
   function quitarItem(index: number) {
@@ -27,11 +31,17 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
   }
 
   function actualizarItem(index: number, campo: keyof PagoItem, valor: string) {
-    setItems(items.map((it, i) => (i === index ? { ...it, [campo]: valor } : it)));
+    setItems(
+      items.map((it, i) => {
+        if (i !== index) return it;
+        const actualizado = { ...it, [campo]: valor };
+        if (campo === "metodo" && valor !== "TARJETA_CREDITO") actualizado.cuotas = "";
+        return actualizado;
+      })
+    );
   }
 
   const sumaPagos = items.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
-  // Pequeño margen por redondeo de decimales.
   const superaElSaldo = sumaPagos - saldoPendiente > 0.005;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,7 +57,11 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
 
     const parsedItems = items
       .filter((it) => it.monto)
-      .map((it) => ({ metodo: it.metodo, monto: Number(it.monto) }));
+      .map((it) => ({
+        metodo: it.metodo,
+        monto: Number(it.monto),
+        cuotas: it.metodo === "TARJETA_CREDITO" && it.cuotas ? Number(it.cuotas) : null,
+      }));
 
     if (parsedItems.length === 0) {
       setError("Cargá al menos un pago.");
@@ -75,7 +89,7 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
       </p>
 
       {items.map((item, index) => (
-        <div key={index} className="flex gap-2 items-center">
+        <div key={index} className="flex flex-wrap gap-2 items-center">
           <select
             className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
             value={item.metodo}
@@ -97,6 +111,20 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
             value={item.monto}
             onChange={(e) => actualizarItem(index, "monto", e.target.value)}
           />
+          {item.metodo === "TARJETA_CREDITO" && (
+            <select
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              value={item.cuotas}
+              onChange={(e) => actualizarItem(index, "cuotas", e.target.value)}
+            >
+              <option value="">Cuotas</option>
+              {[1, 2, 3, 6, 9, 12, 18, 24].map((c) => (
+                <option key={c} value={c}>
+                  {c === 1 ? "1 pago" : `${c} cuotas`}
+                </option>
+              ))}
+            </select>
+          )}
           {items.length > 1 && (
             <Button type="button" variant="ghost" onClick={() => quitarItem(index)}>
               Quitar

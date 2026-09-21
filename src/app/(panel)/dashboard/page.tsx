@@ -73,10 +73,13 @@ export default async function DashboardPage() {
             <h1 className="text-xl font-semibold text-[#4A3428]">Dashboard</h1>
             <p className="text-sm text-[#9C8577]">Resumen de hoy.</p>
           </div>
-          <span className="flex items-center gap-2 rounded-lg bg-[#6B4635] px-3 py-2 text-xs text-white">
+          <Link
+            href="/documentos"
+            className="flex items-center gap-2 rounded-lg bg-[#6B4635] px-3 py-2 text-xs text-white hover:bg-[#5A3A2C] transition-colors"
+          >
             <FileText className="h-4 w-4" />
-            Documentos (próximamente)
-          </span>
+            Documentos
+          </Link>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">

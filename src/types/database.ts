@@ -509,6 +509,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          cuotas: number | null
           id: string
           metodo: Database["public"]["Enums"]["payment_method"]
           monto: number
@@ -517,6 +518,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          cuotas?: number | null
           id?: string
           metodo: Database["public"]["Enums"]["payment_method"]
           monto: number
@@ -525,6 +527,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          cuotas?: number | null
           id?: string
           metodo?: Database["public"]["Enums"]["payment_method"]
           monto?: number
@@ -961,7 +964,12 @@ export type Database = {
       budget_status: "PENDIENTE" | "ACEPTADO" | "RECHAZADO"
       cash_movement_type: "INGRESO" | "EGRESO"
       document_send_status: "NO_ENVIADO" | "ENVIANDO" | "ENVIADO" | "ERROR"
-      payment_method: "EFECTIVO" | "TRANSFERENCIA" | "TARJETA"
+      payment_method:
+        | "EFECTIVO"
+        | "TRANSFERENCIA"
+        | "TARJETA"
+        | "TARJETA_CREDITO"
+        | "TARJETA_DEBITO"
       settlement_status: "PENDIENTE" | "PAGADA"
       stock_movement_type: "ENTRADA" | "CONSUMO" | "AJUSTE" | "DEVOLUCION"
       unit_type: "G" | "ML" | "UNIDAD"
@@ -1114,7 +1122,13 @@ export const Constants = {
       budget_status: ["PENDIENTE", "ACEPTADO", "RECHAZADO"],
       cash_movement_type: ["INGRESO", "EGRESO"],
       document_send_status: ["NO_ENVIADO", "ENVIANDO", "ENVIADO", "ERROR"],
-      payment_method: ["EFECTIVO", "TRANSFERENCIA", "TARJETA"],
+      payment_method: [
+        "EFECTIVO",
+        "TRANSFERENCIA",
+        "TARJETA",
+        "TARJETA_CREDITO",
+        "TARJETA_DEBITO",
+      ],
       settlement_status: ["PENDIENTE", "PAGADA"],
       stock_movement_type: ["ENTRADA", "CONSUMO", "AJUSTE", "DEVOLUCION"],
       unit_type: ["G", "ML", "UNIDAD"],

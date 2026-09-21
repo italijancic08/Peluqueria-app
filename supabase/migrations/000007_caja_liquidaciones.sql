@@ -211,3 +211,195 @@ end;
 $$;
 
 grant execute on function public.marcar_liquidacion_pagada(uuid) to authenticated;
+
+-- cambio en cobrar trabajo:
+
+create or replace function public.cobrar_trabajo(p_work_id uuid, p_pagos jsonb)
+returns table (cobrado boolean, total_pagado numeric)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_work           public.works%rowtype;
+  v_ya_pagado      numeric(12,2);
+  v_nuevo_pago     numeric(12,2);
+  v_total_pagado   numeric(12,2);
+  v_pago           jsonb;
+  v_pct            numeric(5,2);
+  v_payment_id     uuid;
+  v_nombre_cliente text;
+begin
+  if not public.is_staff() then
+    raise exception 'No autorizado';
+  end if;
+
+  select * into v_work from public.works where id = p_work_id for update;
+
+  if v_work.id is null then
+    raise exception 'Trabajo no encontrado';
+  end if;
+
+  if v_work.estado = 'COBRADO' then
+    raise exception 'Este trabajo ya fue cobrado';
+  end if;
+
+  if v_work.estado <> 'FINALIZADO' then
+    raise exception 'El trabajo todavía no está finalizado';
+  end if;
+
+  select coalesce(sum(monto), 0) into v_ya_pagado
+  from public.payments where work_id = p_work_id;
+
+  select coalesce(sum((p->>'monto')::numeric), 0) into v_nuevo_pago
+  from jsonb_array_elements(p_pagos) p;
+
+  if v_ya_pagado + v_nuevo_pago > v_work.total then
+    raise exception 'El monto ingresado supera el saldo pendiente. Faltan solo %', (v_work.total - v_ya_pagado);
+  end if;
+
+  select apellido || ', ' || nombre into v_nombre_cliente
+  from public.clients where id = v_work.client_id;
+
+  for v_pago in select * from jsonb_array_elements(p_pagos)
+  loop
+    insert into public.payments (work_id, metodo, monto, created_by)
+    values (
+      p_work_id,
+      (v_pago->>'metodo')::payment_method,
+      (v_pago->>'monto')::numeric,
+      auth.uid()
+    )
+    returning id into v_payment_id;
+
+    insert into public.cash_movements (tipo, metodo, monto, payment_id, work_id, created_by, descripcion)
+    values (
+      'INGRESO',
+      (v_pago->>'metodo')::payment_method,
+      (v_pago->>'monto')::numeric,
+      v_payment_id,
+      p_work_id,
+      auth.uid(),
+      'Cobro a ' || coalesce(v_nombre_cliente, 'cliente')
+    );
+  end loop;
+
+  v_total_pagado := v_ya_pagado + v_nuevo_pago;
+
+  if v_total_pagado = v_work.total then
+    update public.works
+    set estado = 'COBRADO', cobrado_at = now()
+    where id = p_work_id;
+
+    if v_work.profile_id is not null then
+      select coalesce(comision_pct, (select comision_default_pct from public.business_settings where id = 1))
+      into v_pct
+      from public.profiles where id = v_work.profile_id;
+
+      insert into public.employee_commissions (work_id, profile_id, base_monto, porcentaje_snapshot, monto)
+      values (p_work_id, v_work.profile_id, v_work.total, v_pct, round(v_work.total * v_pct / 100, 2))
+      on conflict (work_id) do nothing;
+    end if;
+
+    return query select true, v_total_pagado;
+  else
+    return query select false, v_total_pagado;
+  end if;
+end;
+$$;
+
+-- Cambio en la disposicion del nombre y apellido
+
+create or replace function public.cobrar_trabajo(p_work_id uuid, p_pagos jsonb)
+returns table (cobrado boolean, total_pagado numeric)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_work           public.works%rowtype;
+  v_ya_pagado      numeric(12,2);
+  v_nuevo_pago     numeric(12,2);
+  v_total_pagado   numeric(12,2);
+  v_pago           jsonb;
+  v_pct            numeric(5,2);
+  v_payment_id     uuid;
+  v_nombre_cliente text;
+begin
+  if not public.is_staff() then
+    raise exception 'No autorizado';
+  end if;
+
+  select * into v_work from public.works where id = p_work_id for update;
+
+  if v_work.id is null then
+    raise exception 'Trabajo no encontrado';
+  end if;
+
+  if v_work.estado = 'COBRADO' then
+    raise exception 'Este trabajo ya fue cobrado';
+  end if;
+
+  if v_work.estado <> 'FINALIZADO' then
+    raise exception 'El trabajo todavía no está finalizado';
+  end if;
+
+  select coalesce(sum(monto), 0) into v_ya_pagado
+  from public.payments where work_id = p_work_id;
+
+  select coalesce(sum((p->>'monto')::numeric), 0) into v_nuevo_pago
+  from jsonb_array_elements(p_pagos) p;
+
+  if v_ya_pagado + v_nuevo_pago > v_work.total then
+    raise exception 'El monto ingresado supera el saldo pendiente. Faltan solo %', (v_work.total - v_ya_pagado);
+  end if;
+
+  select nombre || ' ' || apellido into v_nombre_cliente
+  from public.clients where id = v_work.client_id;
+
+  for v_pago in select * from jsonb_array_elements(p_pagos)
+  loop
+    insert into public.payments (work_id, metodo, monto, created_by)
+    values (
+      p_work_id,
+      (v_pago->>'metodo')::payment_method,
+      (v_pago->>'monto')::numeric,
+      auth.uid()
+    )
+    returning id into v_payment_id;
+
+    insert into public.cash_movements (tipo, metodo, monto, payment_id, work_id, created_by, descripcion)
+    values (
+      'INGRESO',
+      (v_pago->>'metodo')::payment_method,
+      (v_pago->>'monto')::numeric,
+      v_payment_id,
+      p_work_id,
+      auth.uid(),
+      'Cobro a ' || coalesce(v_nombre_cliente, 'cliente')
+    );
+  end loop;
+
+  v_total_pagado := v_ya_pagado + v_nuevo_pago;
+
+  if v_total_pagado = v_work.total then
+    update public.works
+    set estado = 'COBRADO', cobrado_at = now()
+    where id = p_work_id;
+
+    if v_work.profile_id is not null then
+      select coalesce(comision_pct, (select comision_default_pct from public.business_settings where id = 1))
+      into v_pct
+      from public.profiles where id = v_work.profile_id;
+
+      insert into public.employee_commissions (work_id, profile_id, base_monto, porcentaje_snapshot, monto)
+      values (p_work_id, v_work.profile_id, v_work.total, v_pct, round(v_work.total * v_pct / 100, 2))
+      on conflict (work_id) do nothing;
+    end if;
+
+    return query select true, v_total_pagado;
+  else
+    return query select false, v_total_pagado;
+  end if;
+end;
+$$;

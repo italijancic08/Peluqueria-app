@@ -101,7 +101,11 @@ export async function cobrarTrabajo(
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("cobrar_trabajo", {
     p_work_id: id,
-    p_pagos: parsed.data.items.map((p) => ({ metodo: p.metodo, monto: p.monto })),
+    p_pagos: parsed.data.items.map((p) => ({
+      metodo: p.metodo,
+      monto: p.monto,
+      cuotas: p.cuotas ?? null,
+    })),
   });
 
   if (error) return { ok: false, error: error.message || "No se pudo registrar el cobro." };

@@ -13,7 +13,7 @@ export function Sidebar({ rol }: { rol: UserRole }) {
   const primerIndiceAdmin = items.findIndex((item) => item.soloAdmin);
 
   return (
-    <aside className="w-60 shrink-0 bg-white border-r border-[#EDD9C4] p-4 flex flex-col">
+    <aside className="w-60 shrink-0 h-screen sticky top-0 overflow-y-auto bg-white border-r border-[#EDD9C4] p-4 flex flex-col">
       <div className="mb-6 px-2 flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6B4635]">
           <Scissors className="h-4 w-4 text-white" />

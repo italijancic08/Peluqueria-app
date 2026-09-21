@@ -15,8 +15,9 @@ export const pagoSchema = z.object({
   items: z
     .array(
       z.object({
-        metodo: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA"]),
+        metodo: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA_CREDITO", "TARJETA_DEBITO"]),
         monto: z.number().positive("El monto tiene que ser mayor a 0"),
+        cuotas: z.number().int().min(1).max(24).optional().nullable(),
       })
     )
     .min(1, "Agregá al menos un pago"),

@@ -13,7 +13,7 @@ export function formatearPesos(monto: number | string | null): string {
 export function formatearTelefono(tel: string | null): string {
   if (!tel) return "—";
   const d = tel.replace(/\D/g, "");
-  if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  if (d.length === 10) return `(${d.slice(0, 4)}) ${d.slice(4, 6)} ${d.slice(6)}`;
   return tel;
 }
 
