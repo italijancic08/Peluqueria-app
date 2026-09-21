@@ -23,6 +23,7 @@ export default async function DashboardPage() {
       { count: turnosHoy },
       { count: trabajosDisponibles },
       { data: movimientosHoyData },
+      { data: movimientosEfectivoTodos },
       { data: comisionesPendientesData },
       { count: stockBajo },
     ] = await Promise.all([
@@ -38,9 +39,13 @@ export default async function DashboardPage() {
         .eq("estado", "DISPONIBLE"),
       supabase
         .from("cash_movements")
-        .select("monto, tipo, metodo")
+        .select("monto, tipo")
         .gte("created_at", hoyInicio.toISOString())
         .lte("created_at", hoyFin.toISOString()),
+      supabase
+        .from("cash_movements")
+        .select("monto, tipo")
+        .eq("metodo", "EFECTIVO"),
       supabase.from("employee_commissions").select("monto").is("settlement_id", null),
       supabase
         .from("products")
@@ -49,16 +54,13 @@ export default async function DashboardPage() {
     ]);
 
     let ingresosHoy = 0;
-    let cajaFisicaHoy = 0;
     for (const m of movimientosHoyData ?? []) {
-      const monto = Number(m.monto);
-      if (m.tipo === "INGRESO") {
-        ingresosHoy += monto;
-        if (m.metodo === "EFECTIVO") cajaFisicaHoy += monto;
-      } else {
-        ingresosHoy -= monto;
-        if (m.metodo === "EFECTIVO") cajaFisicaHoy -= monto;
-      }
+      ingresosHoy += m.tipo === "INGRESO" ? Number(m.monto) : -Number(m.monto);
+    }
+
+    let cajaFisicaHoy = 0;
+    for (const m of movimientosEfectivoTodos ?? []) {
+      cajaFisicaHoy += m.tipo === "INGRESO" ? Number(m.monto) : -Number(m.monto);
     }
 
     const comisionesPendientes = (comisionesPendientesData ?? []).reduce(

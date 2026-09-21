@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tr, Td } from "@/components/ui/table";
+import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
 import { formatearPesos } from "@/lib/format";
 import { MEDIO_PAGO } from "@/constants/labels";
 import type { CashMovement } from "@/types/models";
@@ -66,17 +67,7 @@ export function FilaMovimiento({ movimiento: m }: Props) {
                 <option value="EGRESO">Egreso</option>
                 <option value="INGRESO">Ingreso</option>
               </select>
-              <select
-                className="rounded-md border border-[#EDD9C4] px-2 py-1 text-sm"
-                value={metodo}
-                onChange={(e) => setMetodo(e.target.value as typeof metodo)}
-              >
-                {Object.entries(MEDIO_PAGO).map(([valor, label]) => (
-                  <option key={valor} value={valor}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+              <SelectorMedioPago value={metodo} onChange={setMetodo} />
               <Input
                 type="number"
                 step="0.01"

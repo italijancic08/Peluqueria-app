@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { crearMovimientoManual } from "@/actions/cash";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MEDIO_PAGO } from "@/constants/labels";
+import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
+
+type Metodo = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO";
 
 export function MovimientoManualForm() {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [tipo, setTipo] = useState<"INGRESO" | "EGRESO">("EGRESO");
-  const [metodo, setMetodo] = useState<"EFECTIVO" | "TRANSFERENCIA" | "TARJETA">("EFECTIVO");
+  const [metodo, setMetodo] = useState<Metodo>("EFECTIVO");
   const [monto, setMonto] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +44,7 @@ export function MovimientoManualForm() {
   }
 
   if (!abierto) {
-    return (
-      <Button onClick={() => setAbierto(true)}>+ Movimiento manual</Button>
-    );
+    return <Button onClick={() => setAbierto(true)}>+ Movimiento manual</Button>;
   }
 
   return (
@@ -60,18 +60,9 @@ export function MovimientoManualForm() {
           <option value="EGRESO">Egreso (gasto/retiro)</option>
           <option value="INGRESO">Ingreso</option>
         </select>
-        <select
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
-          value={metodo}
-          onChange={(e) => setMetodo(e.target.value as typeof metodo)}
-        >
-          {Object.entries(MEDIO_PAGO).map(([valor, label]) => (
-            <option key={valor} value={valor}>
-              {label}
-            </option>
-          ))}
-        </select>
       </div>
+
+      <SelectorMedioPago value={metodo} onChange={setMetodo} />
 
       <Input
         type="number"

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { cobrarTrabajo } from "@/actions/works";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
 import { formatearPesos } from "@/lib/format";
-import { MEDIO_PAGO } from "@/constants/labels";
 
 type PagoItem = {
-  metodo: keyof typeof MEDIO_PAGO;
+  metodo: "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO";
   monto: string;
   cuotas: string;
 };
@@ -30,15 +30,21 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
     setItems(items.filter((_, i) => i !== index));
   }
 
-  function actualizarItem(index: number, campo: keyof PagoItem, valor: string) {
+  function actualizarMetodo(index: number, metodo: PagoItem["metodo"]) {
     setItems(
       items.map((it, i) => {
         if (i !== index) return it;
-        const actualizado = { ...it, [campo]: valor };
-        if (campo === "metodo" && valor !== "TARJETA_CREDITO") actualizado.cuotas = "";
-        return actualizado;
+        return { ...it, metodo, cuotas: metodo === "TARJETA_CREDITO" ? it.cuotas : "" };
       })
     );
+  }
+
+  function actualizarCuotas(index: number, cuotas: string) {
+    setItems(items.map((it, i) => (i === index ? { ...it, cuotas } : it)));
+  }
+
+  function actualizarMonto(index: number, monto: string) {
+    setItems(items.map((it, i) => (i === index ? { ...it, monto } : it)));
   }
 
   const sumaPagos = items.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
@@ -90,17 +96,13 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
 
       {items.map((item, index) => (
         <div key={index} className="flex flex-wrap gap-2 items-center">
-          <select
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          <SelectorMedioPago
             value={item.metodo}
-            onChange={(e) => actualizarItem(index, "metodo", e.target.value)}
-          >
-            {Object.entries(MEDIO_PAGO).map(([valor, label]) => (
-              <option key={valor} value={valor}>
-                {label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => actualizarMetodo(index, v)}
+            mostrarCuotas
+            cuotas={item.cuotas}
+            onCuotasChange={(v) => actualizarCuotas(index, v)}
+          />
           <Input
             type="number"
             step="0.01"
@@ -109,22 +111,8 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
             placeholder="Monto"
             className="w-32"
             value={item.monto}
-            onChange={(e) => actualizarItem(index, "monto", e.target.value)}
+            onChange={(e) => actualizarMonto(index, e.target.value)}
           />
-          {item.metodo === "TARJETA_CREDITO" && (
-            <select
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
-              value={item.cuotas}
-              onChange={(e) => actualizarItem(index, "cuotas", e.target.value)}
-            >
-              <option value="">Cuotas</option>
-              {[1, 2, 3, 6, 9, 12, 18, 24].map((c) => (
-                <option key={c} value={c}>
-                  {c === 1 ? "1 pago" : `${c} cuotas`}
-                </option>
-              ))}
-            </select>
-          )}
           {items.length > 1 && (
             <Button type="button" variant="ghost" onClick={() => quitarItem(index)}>
               Quitar
