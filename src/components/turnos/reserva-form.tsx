@@ -13,9 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { Service } from "@/types/models";
 
+type Empleado = { id: string; nombre: string; apellido: string; foto_url: string | null };
+
+export function ReservaForm({ servicios, equipo }: { servicios: Service[]; equipo: Empleado[] }) {
+
 type Paso = 1 | 2 | 3;
 
-export function ReservaForm({ servicios }: { servicios: Service[] }) {
   const router = useRouter();
   const [paso, setPaso] = useState<Paso>(1);
 
@@ -73,7 +76,7 @@ export function ReservaForm({ servicios }: { servicios: Service[] }) {
       {paso === 1 && (
         <div className="space-y-6">
           <ServiciosGrid servicios={servicios} value={servicioIds} onChange={setServicioIds} />
-          <PeluquerasShowcase />
+          <PeluquerasShowcase equipo={equipo} />
           <ResumenSeleccion
             servicios={servicios}
             servicioIds={servicioIds}

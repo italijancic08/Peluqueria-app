@@ -4,11 +4,10 @@ import { ReservaForm } from "@/components/turnos/reserva-form";
 
 export default async function ReservarTurnoPage() {
   const supabase = await createClient();
-  const { data: servicios } = await supabase
-    .from("services")
-    .select("*")
-    .eq("activo", true)
-    .order("nombre");
+  const [{ data: servicios }, { data: equipo }] = await Promise.all([
+    supabase.from("services").select("*").eq("activo", true).order("nombre"),
+    supabase.rpc("equipo_publico"),
+  ]);
 
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center py-6 sm:py-10 px-4">
@@ -25,7 +24,7 @@ export default async function ReservarTurnoPage() {
           </p>
         </div>
 
-        <ReservaForm servicios={servicios ?? []} />
+        <ReservaForm servicios={servicios ?? []} equipo={equipo ?? []} />
       </div>
     </div>
   );

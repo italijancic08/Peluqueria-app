@@ -597,11 +597,13 @@ export type Database = {
           created_at: string
           email: string | null
           fecha_alta: string
+          foto_url: string | null
           id: string
           nombre: string
           rol: Database["public"]["Enums"]["user_role"]
           telefono: string | null
           updated_at: string
+          visible_publico: boolean
         }
         Insert: {
           activo?: boolean
@@ -610,11 +612,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           fecha_alta?: string
+          foto_url?: string | null
           id: string
           nombre: string
           rol?: Database["public"]["Enums"]["user_role"]
           telefono?: string | null
           updated_at?: string
+          visible_publico?: boolean
         }
         Update: {
           activo?: boolean
@@ -623,11 +627,13 @@ export type Database = {
           created_at?: string
           email?: string | null
           fecha_alta?: string
+          foto_url?: string | null
           id?: string
           nombre?: string
           rol?: Database["public"]["Enums"]["user_role"]
           telefono?: string | null
           updated_at?: string
+          visible_publico?: boolean
         }
         Relationships: []
       }
@@ -927,6 +933,15 @@ export type Database = {
         Returns: {
           cobrado: boolean
           total_pagado: number
+        }[]
+      }
+      equipo_publico: {
+        Args: never
+        Returns: {
+          apellido: string
+          foto_url: string
+          id: string
+          nombre: string
         }[]
       }
       is_admin: { Args: never; Returns: boolean }

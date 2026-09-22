@@ -15,6 +15,7 @@ export const RUTAS = {
   caja: "/caja",
   liquidaciones: "/liquidaciones",
   documentos: "/documentos",
+  perfil: "/perfil",
 
   empleados: "/empleados",
   servicios: "/servicios",

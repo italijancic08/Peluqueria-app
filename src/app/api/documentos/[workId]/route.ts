@@ -120,8 +120,9 @@ export async function GET(
   linea("Gracias por tu visita.", { size: 9, color: marronClaro });
 
   const bytes = await pdfDoc.save();
+  const buffer = Buffer.from(bytes);
 
-  return new NextResponse(bytes, {
+  return new NextResponse(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
