@@ -14,3 +14,12 @@ h1, h2, h3 {
   background-color: #C98A3E;
   color: #FFFFFF;
 }
+
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge viejo */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge nuevo */
+}
