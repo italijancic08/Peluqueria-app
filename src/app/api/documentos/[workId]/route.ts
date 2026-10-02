@@ -102,6 +102,7 @@ export async function GET(
     TRANSFERENCIA: "Transferencia",
     TARJETA_CREDITO: "Tarjeta de crédito",
     TARJETA_DEBITO: "Tarjeta de débito",
+    CUENTA_CORRIENTE: "Cuenta corriente",
   };
 
   if (pagos && pagos.length > 0) {

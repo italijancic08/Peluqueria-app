@@ -12,6 +12,7 @@ import {
   ChartBar,
   Settings2,
   CircleUser,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 import { RUTAS } from "@/constants/routes";
@@ -32,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Trabajos", href: RUTAS.trabajos, icon: Scissors },
   { label: "Stock", href: RUTAS.stock, icon: Package },
   { label: "Caja", href: RUTAS.caja, icon: Wallet },
+  { label: "Cuenta corriente", href: RUTAS.cuentaCorriente, icon: Landmark },
   { label: "Liquidaciones", href: RUTAS.liquidaciones, icon: HandCoins },
   { label: "Empleados", href: RUTAS.empleados, icon: UserCog, soloAdmin: true },
   { label: "Servicios", href: RUTAS.servicios, icon: Sparkles, soloAdmin: true },

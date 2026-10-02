@@ -7,6 +7,15 @@ export const consumoSchema = z.object({
       cantidad: z.number().positive("La cantidad tiene que ser mayor a 0"),
     })
   ),
+  fichas: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid(),
+        contenido: z.string().trim().max(2000),
+      })
+    )
+    .optional()
+    .default([]),
 });
 
 export type ConsumoFormValues = z.infer<typeof consumoSchema>;
@@ -15,7 +24,7 @@ export const pagoSchema = z.object({
   items: z
     .array(
       z.object({
-        metodo: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA_CREDITO", "TARJETA_DEBITO"]),
+        metodo: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA_CREDITO", "TARJETA_DEBITO", "CUENTA_CORRIENTE"]),
         monto: z.number().positive("El monto tiene que ser mayor a 0"),
         cuotas: z.number().int().min(1).max(24).optional().nullable(),
       })

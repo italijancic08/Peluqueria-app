@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth, checkAdmin } from "@/lib/auth/guards";
+import { createClient as createBrowserlessClient } from "@supabase/supabase-js";
+import {
+  datosPersonalesSchema,
+  cambiarEmailSchema,
+  cambiarPasswordSchema,
+} from "@/lib/validations/account";
 import type { ActionResult } from "@/types/models";
 
 export async function subirFotoPerfil(
@@ -58,5 +64,99 @@ export async function actualizarVisibilidadPublica(id: string, visible: boolean)
 
   revalidatePath("/empleados");
   revalidatePath("/turnos");
+  return { ok: true, data: undefined };
+}
+
+export async function actualizarDatosPersonales(valores: unknown): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const parsed = datosPersonalesSchema.safeParse(valores);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisá los datos del formulario.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      nombre: parsed.data.nombre,
+      apellido: parsed.data.apellido,
+      telefono: parsed.data.telefono || null,
+    })
+    .eq("id", perfil.id);
+
+  if (error) return { ok: false, error: "No se pudieron guardar los cambios." };
+
+  revalidatePath("/perfil");
+  return { ok: true, data: undefined };
+}
+
+export async function cambiarEmailPropio(valores: unknown): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const parsed = cambiarEmailSchema.safeParse(valores);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisá los datos del formulario.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ email: parsed.data.email });
+
+  if (error) {
+    if (error.message.toLowerCase().includes("already")) {
+      return { ok: false, error: "Ya existe un usuario con ese email." };
+    }
+    return { ok: false, error: "No se pudo iniciar el cambio de email." };
+  }
+
+  return {
+    ok: true,
+    data: undefined,
+  };
+}
+
+export async function cambiarPasswordPropia(valores: unknown): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil || !perfil.email) return { ok: false, error: "No autorizado." };
+
+  const parsed = cambiarPasswordSchema.safeParse(valores);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisá los datos del formulario.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  // Verificamos la contraseña actual con un cliente aparte, sin tocar la sesión del usuario.
+  const verificador = createBrowserlessClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { error: errorVerificacion } = await verificador.auth.signInWithPassword({
+    email: perfil.email,
+    password: parsed.data.passwordActual,
+  });
+
+  if (errorVerificacion) {
+    return { ok: false, error: "La contraseña actual no es correcta." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.passwordNueva });
+
+  if (error) return { ok: false, error: "No se pudo cambiar la contraseña." };
+
   return { ok: true, data: undefined };
 }

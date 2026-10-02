@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tr, Td } from "@/components/ui/table";
-import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
+import { SelectorMedioPago, type MedioPagoValue } from "@/components/caja/selector-medio-pago";
 import { formatearPesos } from "@/lib/format";
 import { MEDIO_PAGO } from "@/constants/labels";
 import type { CashMovement } from "@/types/models";
@@ -20,9 +20,7 @@ export function FilaMovimiento({ movimiento: m }: Props) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [tipo, setTipo] = useState<"INGRESO" | "EGRESO">(m.tipo as "INGRESO" | "EGRESO");
-  const [metodo, setMetodo] = useState<"EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO">(
-    m.metodo as "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
-  );
+  const [metodo, setMetodo] = useState<MedioPagoValue>(m.metodo as MedioPagoValue);
   const [monto, setMonto] = useState(String(m.monto));
   const [descripcion, setDescripcion] = useState(m.descripcion ?? "");
   const [error, setError] = useState<string | null>(null);

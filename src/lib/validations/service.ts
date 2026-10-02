@@ -8,13 +8,14 @@ export const servicioSchema = z.object({
     .number()
     .int("Tiene que ser un número entero")
     .min(5, "Mínimo 5 minutos")
-    .max(600, "Máximo 600 minutos"),
+    .max(1440, "Máximo 24 horas"),
   cupo_maximo: z
     .number()
     .int()
     .min(1, "Mínimo 1")
     .optional()
     .nullable(),
+  tiene_ficha_tecnica: z.boolean().default(false),
 });
 
 export type ServicioFormValues = z.infer<typeof servicioSchema>;

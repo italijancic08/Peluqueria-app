@@ -19,6 +19,8 @@ export type Payment = Tables["payments"]["Row"];
 export type EmployeeCommission = Tables["employee_commissions"]["Row"];
 export type CashMovement = Tables["cash_movements"]["Row"];
 export type EmployeeSettlement = Tables["employee_settlements"]["Row"];
+export type AccountMovement = Tables["account_movements"]["Row"];
+export type AccountMovementType = Enums["account_movement_type"];
 export type SettlementStatus = Enums["settlement_status"];
 export type CashMovementType = Enums["cash_movement_type"];
 

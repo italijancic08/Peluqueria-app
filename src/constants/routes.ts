@@ -15,6 +15,8 @@ export const RUTAS = {
   caja: "/caja",
   liquidaciones: "/liquidaciones",
   documentos: "/documentos",
+  cuentaCorriente: "/cuenta-corriente",
+  cuentaCorrienteCliente: (id: string) => `/cuenta-corriente/${id}`,
   perfil: "/perfil",
 
   empleados: "/empleados",

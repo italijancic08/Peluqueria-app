@@ -26,6 +26,7 @@ export const MEDIO_PAGO = {
   TRANSFERENCIA: "Transferencia",
   TARJETA_CREDITO: "Tarjeta de crédito",
   TARJETA_DEBITO: "Tarjeta de débito",
+  CUENTA_CORRIENTE: "Cuenta corriente",
 } as const;
 
 export const UNIDAD = {

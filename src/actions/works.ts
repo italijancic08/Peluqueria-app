@@ -33,7 +33,7 @@ export async function finalizarTrabajo(id: string, consumos: unknown): Promise<A
 
   const parsed = consumoSchema.safeParse(consumos);
   if (!parsed.success) {
-    return { ok: false, error: "Revisá los productos cargados." };
+    return { ok: false, error: "Revisá los datos cargados." };
   }
 
   const supabase = await createClient();
@@ -71,6 +71,25 @@ export async function finalizarTrabajo(id: string, consumos: unknown): Promise<A
     });
     if (errorMovimiento) {
       return { ok: false, error: "No se pudo descontar el stock." };
+    }
+  }
+
+  for (const ficha of parsed.data.fichas) {
+    if (!ficha.contenido.trim()) continue;
+
+    const { error: errorFicha, data: filaActualizada } = await supabase
+      .from("work_items")
+      .update({ ficha_tecnica: ficha.contenido })
+      .eq("work_id", id)
+      .eq("service_id", ficha.serviceId)
+      .select("work_id")
+      .maybeSingle();
+
+    if (errorFicha) {
+      return { ok: false, error: "No se pudo guardar la ficha técnica." };
+    }
+    if (!filaActualizada) {
+      return { ok: false, error: "No se encontró el servicio para guardar la ficha técnica." };
     }
   }
 

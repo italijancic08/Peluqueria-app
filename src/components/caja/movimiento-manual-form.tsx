@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { crearMovimientoManual } from "@/actions/cash";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
+import { SelectorMedioPago, type MedioPagoValue } from "@/components/caja/selector-medio-pago";
 
-type Metodo = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO";
+type Metodo = MedioPagoValue;
 
 export function MovimientoManualForm() {
   const router = useRouter();

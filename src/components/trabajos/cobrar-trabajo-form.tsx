@@ -5,16 +5,22 @@ import { useRouter } from "next/navigation";
 import { cobrarTrabajo } from "@/actions/works";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SelectorMedioPago } from "@/components/caja/selector-medio-pago";
+import { SelectorMedioPago, type MedioPagoValue } from "@/components/caja/selector-medio-pago";
 import { formatearPesos } from "@/lib/format";
 
 type PagoItem = {
-  metodo: "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO";
+  metodo: MedioPagoValue;
   monto: string;
   cuotas: string;
 };
 
-export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPendiente: number }) {
+type Props = {
+  id: string;
+  saldoPendiente: number;
+  cuentaCorrienteHabilitada: boolean;
+};
+
+export function CobrarTrabajoForm({ id, saldoPendiente, cuentaCorrienteHabilitada }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<PagoItem[]>([
     { metodo: "EFECTIVO", monto: String(saldoPendiente), cuotas: "" },
@@ -30,7 +36,7 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
     setItems(items.filter((_, i) => i !== index));
   }
 
-  function actualizarMetodo(index: number, metodo: PagoItem["metodo"]) {
+  function actualizarMetodo(index: number, metodo: MedioPagoValue) {
     setItems(
       items.map((it, i) => {
         if (i !== index) return it;
@@ -102,6 +108,7 @@ export function CobrarTrabajoForm({ id, saldoPendiente }: { id: string; saldoPen
             mostrarCuotas
             cuotas={item.cuotas}
             onCuotasChange={(v) => actualizarCuotas(index, v)}
+            permitirCuentaCorriente={cuentaCorrienteHabilitada}
           />
           <Input
             type="number"

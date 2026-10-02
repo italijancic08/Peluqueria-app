@@ -39,6 +39,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_movements: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          id: string
+          metodo: Database["public"]["Enums"]["payment_method"] | null
+          monto: number
+          tipo: Database["public"]["Enums"]["account_movement_type"]
+          work_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          metodo?: Database["public"]["Enums"]["payment_method"] | null
+          monto: number
+          tipo: Database["public"]["Enums"]["account_movement_type"]
+          work_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          metodo?: Database["public"]["Enums"]["payment_method"] | null
+          monto?: number
+          tipo?: Database["public"]["Enums"]["account_movement_type"]
+          work_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_movements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_movements_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_services: {
         Row: {
           appointment_id: string
@@ -362,6 +420,7 @@ export type Database = {
           activo: boolean
           apellido: string
           created_at: string
+          cuenta_corriente_habilitada: boolean
           dni: string | null
           email: string | null
           id: string
@@ -375,6 +434,7 @@ export type Database = {
           activo?: boolean
           apellido: string
           created_at?: string
+          cuenta_corriente_habilitada?: boolean
           dni?: string | null
           email?: string | null
           id?: string
@@ -388,6 +448,7 @@ export type Database = {
           activo?: boolean
           apellido?: string
           created_at?: string
+          cuenta_corriente_habilitada?: boolean
           dni?: string | null
           email?: string | null
           id?: string
@@ -685,6 +746,7 @@ export type Database = {
           id: string
           nombre: string
           precio: number
+          tiene_ficha_tecnica: boolean
           updated_at: string
         }
         Insert: {
@@ -696,6 +758,7 @@ export type Database = {
           id?: string
           nombre: string
           precio: number
+          tiene_ficha_tecnica?: boolean
           updated_at?: string
         }
         Update: {
@@ -707,6 +770,7 @@ export type Database = {
           id?: string
           nombre?: string
           precio?: number
+          tiene_ficha_tecnica?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -768,16 +832,19 @@ export type Database = {
       }
       work_items: {
         Row: {
+          ficha_tecnica: string | null
           precio_snapshot: number
           service_id: string
           work_id: string
         }
         Insert: {
+          ficha_tecnica?: string | null
           precio_snapshot: number
           service_id: string
           work_id: string
         }
         Update: {
+          ficha_tecnica?: string | null
           precio_snapshot?: number
           service_id?: string
           work_id?: string
@@ -958,6 +1025,15 @@ export type Database = {
         Args: { p_settlement_id: string }
         Returns: undefined
       }
+      registrar_pago_cuenta_corriente: {
+        Args: {
+          p_client_id: string
+          p_descripcion: string
+          p_metodo: Database["public"]["Enums"]["payment_method"]
+          p_monto: number
+        }
+        Returns: undefined
+      }
       turnos_ocupados_dia: {
         Args: { p_fecha: string }
         Returns: {
@@ -969,6 +1045,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_movement_type: "DEBITO" | "CREDITO"
       appointment_origin: "PUBLICO" | "INTERNO"
       appointment_status:
         | "CONFIRMADO"
@@ -985,6 +1062,7 @@ export type Database = {
         | "TARJETA"
         | "TARJETA_CREDITO"
         | "TARJETA_DEBITO"
+        | "CUENTA_CORRIENTE"
       settlement_status: "PENDIENTE" | "PAGADA"
       stock_movement_type: "ENTRADA" | "CONSUMO" | "AJUSTE" | "DEVOLUCION"
       unit_type: "G" | "ML" | "UNIDAD"
@@ -1126,6 +1204,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      account_movement_type: ["DEBITO", "CREDITO"],
       appointment_origin: ["PUBLICO", "INTERNO"],
       appointment_status: [
         "CONFIRMADO",
@@ -1143,6 +1222,7 @@ export const Constants = {
         "TARJETA",
         "TARJETA_CREDITO",
         "TARJETA_DEBITO",
+        "CUENTA_CORRIENTE",
       ],
       settlement_status: ["PENDIENTE", "PAGADA"],
       stock_movement_type: ["ENTRADA", "CONSUMO", "AJUSTE", "DEVOLUCION"],

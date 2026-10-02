@@ -27,7 +27,8 @@ export async function crearServicio(valores: unknown): Promise<ActionResult<Serv
       descripcion: parsed.data.descripcion || null,
       precio: parsed.data.precio,
       duracion_min: parsed.data.duracion_min,
-      cupo_maximo: parsed.data.cupo_maximo || null,
+      cupo_maximo: parsed.data.cupo_maximo ?? null,
+      tiene_ficha_tecnica: parsed.data.tiene_ficha_tecnica,
     })
     .select()
     .single();
@@ -62,7 +63,8 @@ export async function actualizarServicio(
       descripcion: parsed.data.descripcion || null,
       precio: parsed.data.precio,
       duracion_min: parsed.data.duracion_min,
-      cupo_maximo: parsed.data.cupo_maximo || null,
+      cupo_maximo: parsed.data.cupo_maximo ?? null,
+      tiene_ficha_tecnica: parsed.data.tiene_ficha_tecnica,
     })
     .eq("id", id)
     .select()

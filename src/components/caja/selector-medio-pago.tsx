@@ -1,8 +1,15 @@
 "use client";
 
-type MedioPagoValue = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA_CREDITO" | "TARJETA_DEBITO";
+export type MedioPagoValue =
+  | "EFECTIVO"
+  | "TRANSFERENCIA"
+  | "TARJETA_CREDITO"
+  | "TARJETA_DEBITO"
+  | "CUENTA_CORRIENTE";
 
-function principalDe(v: MedioPagoValue): "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" {
+type Principal = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
+
+function principalDe(v: MedioPagoValue): Principal {
   if (v === "TARJETA_CREDITO" || v === "TARJETA_DEBITO") return "TARJETA";
   return v;
 }
@@ -13,9 +20,17 @@ type Props = {
   mostrarCuotas?: boolean;
   cuotas?: string;
   onCuotasChange?: (v: string) => void;
+  permitirCuentaCorriente?: boolean;
 };
 
-export function SelectorMedioPago({ value, onChange, mostrarCuotas, cuotas, onCuotasChange }: Props) {
+export function SelectorMedioPago({
+  value,
+  onChange,
+  mostrarCuotas,
+  cuotas,
+  onCuotasChange,
+  permitirCuentaCorriente,
+}: Props) {
   const principal = principalDe(value);
 
   function cambiarPrincipal(p: string) {
@@ -40,6 +55,7 @@ export function SelectorMedioPago({ value, onChange, mostrarCuotas, cuotas, onCu
         <option value="EFECTIVO">Efectivo</option>
         <option value="TRANSFERENCIA">Transferencia</option>
         <option value="TARJETA">Tarjeta</option>
+        {permitirCuentaCorriente && <option value="CUENTA_CORRIENTE">Cuenta corriente</option>}
       </select>
 
       {principal === "TARJETA" && (

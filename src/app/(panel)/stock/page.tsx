@@ -2,17 +2,26 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { ToggleActivoProducto } from "@/components/stock/toggle-activo-producto";
 import { UNIDAD } from "@/constants/labels";
 
-export default async function StockPage() {
+export default async function StockPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const supabase = await createClient();
 
-  const { data: productos, error } = await supabase
-    .from("products")
-    .select("*")
-    .order("nombre", { ascending: true });
+  let query = supabase.from("products").select("*").order("nombre", { ascending: true });
+
+  if (q) {
+    query = query.or(`nombre.ilike.%${q}%,categoria.ilike.%${q}%`);
+  }
+
+  const { data: productos, error } = await query;
 
   return (
     <div className="space-y-4">
@@ -28,9 +37,20 @@ export default async function StockPage() {
         </div>
       </div>
 
+      <form className="max-w-sm">
+        <Input
+          type="search"
+          name="q"
+          placeholder="Buscar por nombre o categoría"
+          defaultValue={q ?? ""}
+        />
+      </form>
+
       {error && <p className="text-sm text-red-600">No se pudieron cargar los productos.</p>}
       {!error && productos && productos.length === 0 && (
-        <p className="text-sm text-neutral-500">Todavía no hay productos cargados.</p>
+        <p className="text-sm text-neutral-500">
+          {q ? "No se encontraron productos con ese criterio." : "Todavía no hay productos cargados."}
+        </p>
       )}
 
       {!error && productos && productos.length > 0 && (
