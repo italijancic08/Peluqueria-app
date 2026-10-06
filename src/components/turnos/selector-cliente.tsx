@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buscarClientes, crearCliente } from "@/actions/clients";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Buscador } from "@/components/ui/buscador";
+import { useDebounce } from "@/lib/use-debounce";
 import type { Client } from "@/types/models";
 
 type Props = {
@@ -13,8 +15,14 @@ type Props = {
 
 export function SelectorCliente({ value, onChange }: Props) {
   const [query, setQuery] = useState("");
-  const [resultados, setResultados] = useState<Client[]>([]);
-  const [buscando, setBuscando] = useState(false);
+  const [resultado, setResultado] = useState<{ consulta: string; data: Client[] }>({
+    consulta: "",
+    data: [],
+  });
+  const consulta = useDebounce(query, 300).trim();
+  const buscable = consulta.length >= 2;
+  const resultados = buscable ? resultado.data : [];
+  const buscando = buscable && resultado.consulta !== consulta;
 
   const [creando, setCreando] = useState(false);
   const [nombre, setNombre] = useState("");
@@ -23,11 +31,22 @@ export function SelectorCliente({ value, onChange }: Props) {
   const [errorCreacion, setErrorCreacion] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  async function buscar() {
-    setBuscando(true);
-    const res = await buscarClientes(query);
-    setBuscando(false);
-    if (res.ok) setResultados(res.data);
+  useEffect(() => {
+    if (consulta.length < 2) return;
+    let cancelado = false;
+    buscarClientes(consulta).then((res) => {
+      if (cancelado) return;
+      setResultado({ consulta, data: res.ok ? res.data : [] });
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [consulta]);
+
+  function elegir(c: Client) {
+    onChange(c);
+    setQuery("");
+    setResultado({ consulta: "", data: [] });
   }
 
   async function crear() {
@@ -90,16 +109,11 @@ export function SelectorCliente({ value, onChange }: Props) {
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Buscar por nombre o teléfono"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <Button type="button" variant="secondary" onClick={buscar} disabled={buscando}>
-          Buscar
-        </Button>
-      </div>
+      <Buscador
+        value={query}
+        onChange={setQuery}
+        placeholder="Buscar por nombre o teléfono"
+      />
 
       {resultados.length > 0 && (
         <div className="rounded-md border border-[#EDD9C4] bg-white divide-y divide-[#F3E5D6]">
@@ -107,10 +121,7 @@ export function SelectorCliente({ value, onChange }: Props) {
             <button
               type="button"
               key={c.id}
-              onClick={() => {
-                onChange(c);
-                setResultados([]);
-              }}
+              onClick={() => elegir(c)}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-[#F6E4D3]"
             >
               {c.apellido}, {c.nombre} — {c.telefono}
@@ -127,9 +138,15 @@ export function SelectorCliente({ value, onChange }: Props) {
       )}
 
       {resultados.length === 0 && (
-        <button type="button" onClick={() => setCreando(true)} className="text-sm text-[#6B4635] underline">
-          + Crear cliente nuevo
-        </button>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          {buscando && <span className="text-[#9C8577]">Buscando...</span>}
+          {!buscando && buscable && (
+            <span className="text-[#9C8577]">No se encontraron clientes.</span>
+          )}
+          <button type="button" onClick={() => setCreando(true)} className="text-[#6B4635] underline">
+            + Crear cliente nuevo
+          </button>
+        </div>
       )}
     </div>
   );

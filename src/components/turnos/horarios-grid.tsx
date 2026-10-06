@@ -52,7 +52,7 @@ export function HorariosGrid({ servicioIds, fecha, onFechaChange, value, onChang
         {cargando && <p className="text-sm text-[#9C8577]">Buscando horarios...</p>}
         {error && <p className="text-sm text-[#B1543A]">{error}</p>}
         {!cargando && !error && slots.length === 0 && (
-          <p className="text-sm text-[#9C8577]">Ese día no hay atención.</p>
+          <p className="text-sm text-[#9C8577]">No hay horarios disponibles para ese día.</p>
         )}
 
         {slots.length > 0 && (

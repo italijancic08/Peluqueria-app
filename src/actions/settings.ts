@@ -27,6 +27,9 @@ export async function actualizarConfiguracion(valores: unknown): Promise<ActionR
       comision_default_pct: parsed.data.comision_default_pct,
       capacidad_simultanea: parsed.data.capacidad_simultanea,
       intervalo_turnos_min: parsed.data.intervalo_turnos_min,
+      turnos_expiran: parsed.data.turnos_expiran,
+      expiracion_turno_min: parsed.data.expiracion_turno_min,
+      aviso_sin_tomar_min: parsed.data.aviso_sin_tomar_min,
     })
     .eq("id", 1);
 

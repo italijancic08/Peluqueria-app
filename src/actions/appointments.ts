@@ -65,7 +65,9 @@ export async function obtenerDisponibilidad(
   return {
     ok: true,
     data: {
-      slots: slots.map((s) => ({ horaISO: s.inicio.toISOString(), disponible: s.disponible })),
+      slots: slots
+        .filter((s) => s.inicio.getTime() > Date.now()) // no se ofrecen horarios que ya pasaron
+        .map((s) => ({ horaISO: s.inicio.toISOString(), disponible: s.disponible })),
       duracionMin,
     },
   };
@@ -82,6 +84,10 @@ async function verificarHorarioDisponible(
   fin: Date,
   servicioIds: string[]
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (Number.isNaN(inicio.getTime()) || inicio.getTime() <= Date.now()) {
+    return { ok: false, error: "No se pueden sacar turnos en una fecha u hora que ya pasó." };
+  }
+
   const [{ data: settings }, { data: serviciosInfo }, { data: ocupados }] = await Promise.all([
     cliente.from("business_settings").select("capacidad_simultanea").eq("id", 1).single(),
     cliente.from("services").select("id, cupo_maximo").in("id", servicioIds),

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/guards";
 import { Badge } from "@/components/ui/badge";
+import { IniciarTrabajoButton } from "@/components/trabajos/iniciar-trabajo-button";
 import { FinalizarTrabajoForm } from "@/components/trabajos/finalizar-trabajo-form";
 import { CobrarTrabajoForm } from "@/components/trabajos/cobrar-trabajo-form";
 import { formatearPesos } from "@/lib/format";
@@ -110,6 +111,17 @@ export default async function TrabajoDetallePage({
       )}
 
       {trabajo.estado === "TOMADO" && (
+        <div className="pt-4 border-t border-neutral-200 space-y-2">
+          <h2 className="text-sm font-medium text-neutral-700">Cuando llegue el cliente</h2>
+          <p className="text-xs text-neutral-500">
+            Estar &quot;tomado&quot; solo indica quién va a atender este turno. Al iniciar, pasa a
+            &quot;En proceso&quot;.
+          </p>
+          <IniciarTrabajoButton id={trabajo.id} />
+        </div>
+      )}
+
+      {trabajo.estado === "EN_CURSO" && (
         <div className="pt-4 border-t border-neutral-200">
           <h2 className="text-sm font-medium text-neutral-700 mb-2">Finalizar trabajo</h2>
           <FinalizarTrabajoForm id={trabajo.id} productos={productos ?? []} itemsConFicha={itemsConFicha} />

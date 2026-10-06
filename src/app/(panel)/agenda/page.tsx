@@ -6,7 +6,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { SelectorFechaAgenda } from "@/components/turnos/selector-fecha-agenda";
 import { CancelarTurnoButton } from "@/components/turnos/cancelar-turno-button";
 import { mostrarHora } from "@/lib/dates";
-import { ESTADO_TURNO } from "@/constants/labels";
+import { estadoTurnoVista } from "@/lib/estado-turno";
 
 export default async function TurnosPage({
   searchParams,
@@ -15,11 +15,23 @@ export default async function TurnosPage({
 }) {
   const { fecha } = await searchParams;
   const fechaConsulta = fecha ?? new Date().toISOString().slice(0, 10);
+  const ahora = new Date().getTime();
 
   const supabase = await createClient();
+  await supabase.rpc("expirar_turnos_vencidos");
+
+  const { data: settings } = await supabase
+    .from("business_settings")
+    .select("aviso_sin_tomar_min")
+    .eq("id", 1)
+    .single();
+  const avisoMin = settings?.aviso_sin_tomar_min ?? 60;
+
   const { data: turnos, error } = await supabase
     .from("appointments")
-    .select("*, clients(nombre, apellido, telefono)")
+    .select(
+      "*, clients(nombre, apellido, telefono), works(estado, profile_id, profiles(nombre, apellido))"
+    )
     .gte("fecha_hora_inicio", `${fechaConsulta}T00:00:00`)
     .lt("fecha_hora_inicio", `${fechaConsulta}T23:59:59`)
     .order("fecha_hora_inicio");
@@ -47,27 +59,43 @@ export default async function TurnosPage({
             <Tr>
               <Th>Hora</Th>
               <Th>Cliente</Th>
+              <Th>Atiende</Th>
               <Th>Estado</Th>
               <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
-            {turnos.map((t) => (
-              <Tr key={t.id}>
-                <Td>{mostrarHora(t.fecha_hora_inicio)}</Td>
-                <Td>
-                  {t.clients?.apellido}, {t.clients?.nombre}
-                </Td>
-                <Td>
-                  <Badge variant={t.estado === "CANCELADO" ? "danger" : "success"}>
-                    {ESTADO_TURNO[t.estado as keyof typeof ESTADO_TURNO]}
-                  </Badge>
-                </Td>
-                <Td className="text-right">
-                  {t.estado !== "CANCELADO" && <CancelarTurnoButton id={t.id} />}
-                </Td>
-              </Tr>
-            ))}
+            {turnos.map((t) => {
+              const trabajo = Array.isArray(t.works) ? t.works[0] : t.works;
+              const vista = estadoTurnoVista({
+                estadoTurno: t.estado,
+                estadoTrabajo: trabajo?.estado,
+                inicio: t.fecha_hora_inicio,
+                ahora,
+                avisoMin,
+              });
+              const atiende = trabajo?.profiles
+                ? `${trabajo.profiles.nombre} ${trabajo.profiles.apellido}`
+                : trabajo?.profile_id
+                  ? "Asignado"
+                  : "Sin asignar";
+
+              return (
+                <Tr key={t.id}>
+                  <Td>{mostrarHora(t.fecha_hora_inicio)}</Td>
+                  <Td>
+                    {t.clients?.apellido}, {t.clients?.nombre}
+                  </Td>
+                  <Td>{atiende}</Td>
+                  <Td>
+                    <Badge variant={vista.variante}>{vista.etiqueta}</Badge>
+                  </Td>
+                  <Td className="text-right">
+                    {vista.puedeCancelar && <CancelarTurnoButton id={t.id} />}
+                  </Td>
+                </Tr>
+              );
+            })}
           </Tbody>
         </Table>
       )}

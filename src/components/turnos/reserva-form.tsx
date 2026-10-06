@@ -11,6 +11,7 @@ import { HorariosGrid } from "./horarios-grid";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { hoyISO } from "@/lib/dates";
 import type { Service } from "@/types/models";
 
 type Empleado = { id: string; nombre: string; apellido: string; foto_url: string | null };
@@ -23,7 +24,7 @@ type Paso = 1 | 2 | 3;
   const [paso, setPaso] = useState<Paso>(1);
 
   const [servicioIds, setServicioIds] = useState<string[]>([]);
-  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(() => hoyISO());
   const [slot, setSlot] = useState<string | null>(null);
 
   const [nombre, setNombre] = useState("");

@@ -1,6 +1,6 @@
 export const ESTADO_TURNO = {
   CONFIRMADO: "Confirmado",
-  EN_CURSO: "En curso",
+  EN_CURSO: "En proceso",
   FINALIZADO: "Finalizado",
   CANCELADO: "Cancelado",
   AUSENTE: "No asistió",
@@ -15,7 +15,7 @@ export const ESTADO_PRESUPUESTO = {
 export const ESTADO_TRABAJO = {
   DISPONIBLE: "Disponible",
   TOMADO: "Tomado",
-  EN_CURSO: "En curso",
+  EN_CURSO: "En proceso",
   FINALIZADO: "Finalizado",
   COBRADO: "Cobrado",
   CANCELADO: "Cancelado",

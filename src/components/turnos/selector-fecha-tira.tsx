@@ -1,6 +1,8 @@
 "use client";
 
+import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { hoyISO } from "@/lib/dates";
 
 const DIAS_CORTOS = ["DO", "LU", "MA", "MI", "JU", "VI", "SA"];
 
@@ -10,17 +12,14 @@ type Props = {
 };
 
 export function SelectorFechaTira({ value, onChange }: Props) {
-  const hoy = new Date();
-  const dias = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(hoy);
-    d.setDate(hoy.getDate() + i);
-    return d;
-  });
+  // Se arma desde "hoy" en hora Argentina (al mediodía, para evitar saltos por zona horaria)
+  const base = new Date(`${hoyISO()}T12:00:00`);
+  const dias = Array.from({ length: 14 }, (_, i) => addDays(base, i));
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
       {dias.map((d) => {
-        const iso = d.toISOString().slice(0, 10);
+        const iso = format(d, "yyyy-MM-dd");
         const seleccionado = iso === value;
         return (
           <button

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { BuscadorUrl } from "@/components/ui/buscador-url";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { ToggleActivoProducto } from "@/components/stock/toggle-activo-producto";
 import { UNIDAD } from "@/constants/labels";
@@ -37,14 +37,11 @@ export default async function StockPage({
         </div>
       </div>
 
-      <form className="max-w-sm">
-        <Input
-          type="search"
-          name="q"
-          placeholder="Buscar por nombre o categoría"
-          defaultValue={q ?? ""}
-        />
-      </form>
+      <BuscadorUrl
+        valorInicial={q ?? ""}
+        placeholder="Buscar por nombre o categoría"
+        className="max-w-sm"
+      />
 
       {error && <p className="text-sm text-red-600">No se pudieron cargar los productos.</p>}
       {!error && productos && productos.length === 0 && (

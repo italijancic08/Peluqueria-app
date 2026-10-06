@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { obtenerDisponibilidad } from "@/actions/appointments";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { mostrarHora } from "@/lib/dates";
+import { hoyISO, mostrarHora } from "@/lib/dates";
 
 type Slot = { horaISO: string; disponible: boolean };
 
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
-  const [fecha, setFecha] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState<string>(() => hoyISO());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
         <Input
           type="date"
           value={fecha}
-          min={new Date().toISOString().slice(0, 10)}
+          min={hoyISO()}
           onChange={(e) => setFecha(e.target.value)}
         />
       </div>
@@ -62,7 +62,7 @@ export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
       {error && <p className="text-sm text-[#B1543A]">{error}</p>}
 
       {!cargando && !error && servicioIds.length > 0 && slots.length === 0 && (
-        <p className="text-sm text-[#9C8577]">Ese día no hay atención.</p>
+        <p className="text-sm text-[#9C8577]">No hay horarios disponibles para ese día.</p>
       )}
 
       {slots.length > 0 && (

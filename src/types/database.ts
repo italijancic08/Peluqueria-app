@@ -335,6 +335,9 @@ export type Database = {
           id: number
           intervalo_turnos_min: number
           nombre_negocio: string
+          turnos_expiran: boolean
+          expiracion_turno_min: number
+          aviso_sin_tomar_min: number
           updated_at: string
         }
         Insert: {
@@ -344,6 +347,9 @@ export type Database = {
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          turnos_expiran?: boolean
+          expiracion_turno_min?: number
+          aviso_sin_tomar_min?: number
           updated_at?: string
         }
         Update: {
@@ -353,6 +359,9 @@ export type Database = {
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          turnos_expiran?: boolean
+          expiracion_turno_min?: number
+          aviso_sin_tomar_min?: number
           updated_at?: string
         }
         Relationships: []
@@ -1033,6 +1042,10 @@ export type Database = {
           p_monto: number
         }
         Returns: undefined
+      }
+      expirar_turnos_vencidos: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       turnos_ocupados_dia: {
         Args: { p_fecha: string }

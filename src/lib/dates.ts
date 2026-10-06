@@ -26,6 +26,11 @@ export function aLocal(fechaUTC: string | Date): Date {
   return toZonedTime(new Date(fechaUTC), ZONA);
 }
 
+/** Fecha de hoy (yyyy-MM-dd) en la zona horaria del negocio, no en UTC. */
+export function hoyISO(): string {
+  return formatInTimeZone(new Date(), ZONA, "yyyy-MM-dd");
+}
+
 /** Semana laboral del negocio: lunes a sábado. */
 export function semanaLaboral(fecha: Date): { inicio: Date; fin: Date } {
   const inicio = startOfWeek(fecha, { weekStartsOn: 1 });

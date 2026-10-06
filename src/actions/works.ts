@@ -27,6 +27,129 @@ export async function tomarTrabajo(id: string): Promise<ActionResult> {
   return { ok: true, data: undefined };
 }
 
+/**
+ * El cliente llegó y se empieza a atender: el trabajo pasa a "En proceso".
+ * (Tomar un trabajo solo asigna quién lo va a hacer.)
+ */
+export async function iniciarTrabajo(id: string): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const supabase = await createClient();
+
+  const { data: trabajo } = await supabase
+    .from("works")
+    .select("id, estado, profile_id")
+    .eq("id", id)
+    .single();
+
+  if (!trabajo) return { ok: false, error: "Trabajo no encontrado." };
+  if (trabajo.estado !== "TOMADO") {
+    return { ok: false, error: "Primero tiene que estar tomado para poder iniciarlo." };
+  }
+  if (trabajo.profile_id !== perfil.id && perfil.rol !== "ADMIN") {
+    return { ok: false, error: "Solo el empleado asignado puede iniciar este trabajo." };
+  }
+
+  const { data, error } = await supabase
+    .from("works")
+    .update({ estado: "EN_CURSO", fecha_inicio: new Date().toISOString() })
+    .eq("id", id)
+    .eq("estado", "TOMADO")
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "No se pudo iniciar el trabajo." };
+  if (!data) return { ok: false, error: "El trabajo cambió de estado. Actualizá la página." };
+
+  revalidatePath("/trabajos");
+  revalidatePath(`/trabajos/${id}`);
+  revalidatePath("/agenda");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * El cliente llegó y se empieza a atender: el trabajo pasa a "En proceso".
+ * (Tomar un trabajo solo asigna quién lo va a hacer.)
+ */
+export async function iniciarTrabajo(id: string): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const supabase = await createClient();
+
+  const { data: trabajo } = await supabase
+    .from("works")
+    .select("id, estado, profile_id")
+    .eq("id", id)
+    .single();
+
+  if (!trabajo) return { ok: false, error: "Trabajo no encontrado." };
+  if (trabajo.estado !== "TOMADO") {
+    return { ok: false, error: "Primero tiene que estar tomado para poder iniciarlo." };
+  }
+  if (trabajo.profile_id !== perfil.id && perfil.rol !== "ADMIN") {
+    return { ok: false, error: "Solo el empleado asignado puede iniciar este trabajo." };
+  }
+
+  const { data, error } = await supabase
+    .from("works")
+    .update({ estado: "EN_CURSO", fecha_inicio: new Date().toISOString() })
+    .eq("id", id)
+    .eq("estado", "TOMADO")
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "No se pudo iniciar el trabajo." };
+  if (!data) return { ok: false, error: "El trabajo cambió de estado. Actualizá la página." };
+
+  revalidatePath("/trabajos");
+  revalidatePath(`/trabajos/${id}`);
+  revalidatePath("/agenda");
+  return { ok: true, data: undefined };
+}
+
+/**
+ * El cliente llegó y se empieza a atender: el trabajo pasa a "En proceso".
+ * (Tomar un trabajo solo asigna quién lo va a hacer.)
+ */
+export async function iniciarTrabajo(id: string): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const supabase = await createClient();
+
+  const { data: trabajo } = await supabase
+    .from("works")
+    .select("id, estado, profile_id")
+    .eq("id", id)
+    .single();
+
+  if (!trabajo) return { ok: false, error: "Trabajo no encontrado." };
+  if (trabajo.estado !== "TOMADO") {
+    return { ok: false, error: "Primero tiene que estar tomado para poder iniciarlo." };
+  }
+  if (trabajo.profile_id !== perfil.id && perfil.rol !== "ADMIN") {
+    return { ok: false, error: "Solo el empleado asignado puede iniciar este trabajo." };
+  }
+
+  const { data, error } = await supabase
+    .from("works")
+    .update({ estado: "EN_CURSO", fecha_inicio: new Date().toISOString() })
+    .eq("id", id)
+    .eq("estado", "TOMADO")
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: "No se pudo iniciar el trabajo." };
+  if (!data) return { ok: false, error: "El trabajo cambió de estado. Actualizá la página." };
+
+  revalidatePath("/trabajos");
+  revalidatePath(`/trabajos/${id}`);
+  revalidatePath("/agenda");
+  return { ok: true, data: undefined };
+}
+
 export async function finalizarTrabajo(id: string, consumos: unknown): Promise<ActionResult> {
   const perfil = await checkAuth();
   if (!perfil) return { ok: false, error: "No autorizado." };

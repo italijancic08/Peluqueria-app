@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { Buscador } from "@/components/ui/buscador";
 import { cn } from "@/lib/utils";
 import { formatearPesos } from "@/lib/format";
+import { normalizarTexto } from "@/lib/texto";
 import { iconoParaServicio } from "@/lib/service-icons";
 import type { Service } from "@/types/models";
 
@@ -16,9 +17,10 @@ type Props = {
 export function ServiciosGrid({ servicios, value, onChange }: Props) {
   const [busqueda, setBusqueda] = useState("");
 
-  const filtrados = servicios.filter((s) =>
-    s.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const termino = normalizarTexto(busqueda);
+  const filtrados = termino
+    ? servicios.filter((s) => normalizarTexto(s.nombre).includes(termino))
+    : servicios;
 
   function alternar(id: string) {
     onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
@@ -26,12 +28,7 @@ export function ServiciosGrid({ servicios, value, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <Input
-        type="search"
-        placeholder="Buscar servicio"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-      />
+      <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar servicio" />
 
       <div>
         <h2 className="text-sm font-medium text-[#4A3428] mb-3">Servicios</h2>

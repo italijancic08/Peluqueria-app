@@ -7,11 +7,15 @@ import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/guards";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { AlertaTurnosSinTomar } from "@/components/dashboard/alerta-turnos-sin-tomar";
+import { contarTurnosSinTomar } from "@/lib/turnos-sin-tomar";
 import { formatearPesos } from "@/lib/format";
 
 export default async function DashboardPage() {
   const perfil = await requireAuth();
   const supabase = await createClient();
+  await supabase.rpc("expirar_turnos_vencidos");
+  const sinTomar = await contarTurnosSinTomar(supabase);
 
   const hoyInicio = new Date();
   hoyInicio.setHours(0, 0, 0, 0);
@@ -83,6 +87,8 @@ export default async function DashboardPage() {
             Documentos
           </Link>
         </div>
+
+        <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 space-y-4 sm:border-r sm:border-dashed sm:border-[#D9C4A8] sm:pr-4">
@@ -170,6 +176,8 @@ export default async function DashboardPage() {
         <h1 className="text-xl font-semibold text-[#4A3428]">Dashboard</h1>
         <p className="text-sm text-[#9C8577]">Tu resumen de hoy.</p>
       </div>
+
+      <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link href="/agenda">

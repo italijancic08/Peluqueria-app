@@ -26,6 +26,9 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
       comision_default_pct: Number(settings.comision_default_pct),
       capacidad_simultanea: settings.capacidad_simultanea,
       intervalo_turnos_min: settings.intervalo_turnos_min,
+      turnos_expiran: settings.turnos_expiran,
+      expiracion_turno_min: settings.expiracion_turno_min,
+      aviso_sin_tomar_min: settings.aviso_sin_tomar_min,
     },
   });
 
@@ -104,6 +107,51 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
             <p className="text-xs text-red-600">{errors.intervalo_turnos_min.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-[#EDD9C4] p-4">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-700">
+          <input type="checkbox" className="accent-[#6B4635]" {...register("turnos_expiran")} />
+          Cancelar automáticamente los turnos a los que nadie asistió
+        </label>
+
+        <div className="space-y-1 max-w-xs">
+          <label className="text-sm font-medium text-neutral-700">
+            Tiempo máximo de espera (min)
+          </label>
+          <Input
+            type="number"
+            step="5"
+            min="1"
+            {...register("expiracion_turno_min", { valueAsNumber: true })}
+          />
+          <p className="text-xs text-neutral-500">
+            Pasada la hora del turno figura como &quot;Demorado&quot;. Si nadie inicia el trabajo
+            (el cliente no llegó) dentro de este tiempo, el turno se cancela solo.
+          </p>
+          {errors.expiracion_turno_min && (
+            <p className="text-xs text-red-600">{errors.expiracion_turno_min.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-1 max-w-xs">
+        <label className="text-sm font-medium text-neutral-700">
+          Avisar turnos sin tomar (min antes)
+        </label>
+        <Input
+          type="number"
+          step="5"
+          min="1"
+          {...register("aviso_sin_tomar_min", { valueAsNumber: true })}
+        />
+        <p className="text-xs text-neutral-500">
+          Si a esta cantidad de minutos del turno todavía no tiene empleado asignado, se marca en
+          rojo como &quot;Sin tomar&quot; y aparece un aviso en el dashboard.
+        </p>
+        {errors.aviso_sin_tomar_min && (
+          <p className="text-xs text-red-600">{errors.aviso_sin_tomar_min.message}</p>
+        )}
       </div>
 
       <Button type="submit" disabled={isSubmitting}>

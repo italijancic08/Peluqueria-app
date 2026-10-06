@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { BuscadorUrl } from "@/components/ui/buscador-url";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { formatearTelefono } from "@/lib/format";
 import { RUTAS } from "@/constants/routes";
@@ -38,14 +38,11 @@ export default async function ClientesPage({
         </Link>
       </div>
 
-      <form className="max-w-sm">
-        <Input
-          type="search"
-          name="q"
-          placeholder="Buscar por nombre, teléfono o email"
-          defaultValue={q ?? ""}
-        />
-      </form>
+      <BuscadorUrl
+        valorInicial={q ?? ""}
+        placeholder="Buscar por nombre, teléfono o email"
+        className="max-w-sm"
+      />
 
       {error && (
         <p className="text-sm text-red-600">No se pudieron cargar los clientes.</p>
