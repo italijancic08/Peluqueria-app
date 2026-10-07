@@ -41,6 +41,118 @@ function formatearDuracion(minutos?: number | null) {
   return `${horas} h ${resto} min`;
 }
 
+function dibujarIconoUbicacion(
+  page: any,
+  x: number,
+  y: number,
+  color: any
+) {
+  // Cabeza del pin
+  page.drawCircle({
+    x: x + 5,
+    y: y + 7,
+    size: 4.5,
+    borderColor: color,
+    borderWidth: 1.2,
+  });
+
+  // Punta del pin
+  page.drawLine({
+    start: {
+      x: x + 1.5,
+      y: y + 4,
+    },
+    end: {
+      x: x + 5,
+      y: y - 1,
+    },
+    thickness: 1.2,
+    color,
+  });
+
+  page.drawLine({
+    start: {
+      x: x + 8.5,
+      y: y + 4,
+    },
+    end: {
+      x: x + 5,
+      y: y - 1,
+    },
+    thickness: 1.2,
+    color,
+  });
+
+  // Centro del pin
+  page.drawCircle({
+    x: x + 5,
+    y: y + 7,
+    size: 1.4,
+    color,
+  });
+}
+
+function dibujarIconoEmail(
+  page: any,
+  x: number,
+  y: number,
+  color: any
+) {
+  // Contorno del sobre
+  page.drawRectangle({
+    x,
+    y,
+    width: 12,
+    height: 9,
+    borderColor: color,
+    borderWidth: 1.1,
+  });
+
+  // Diagonales internas
+  page.drawLine({
+    start: {
+      x,
+      y: y + 9,
+    },
+    end: {
+      x: x + 6,
+      y: y + 4.2,
+    },
+    thickness: 1,
+    color,
+  });
+
+  page.drawLine({
+    start: {
+      x: x + 12,
+      y: y + 9,
+    },
+    end: {
+      x: x + 6,
+      y: y + 4.2,
+    },
+    thickness: 1,
+    color,
+  });
+}
+
+function dibujarIconoTelefono(
+  page: any,
+  x: number,
+  y: number,
+  color: any
+) {
+  page.drawSvgPath(
+    "M6.62 10.79c1.44 1.44 2.89 2.7 4.37 3.79.2.15.45.21.69.16l2.78-.69c.29-.07.53-.3.6-.6l.7-2.78a.99.99 0 0 0-.25-.91l-1.27-1.27a.99.99 0 0 0-1.41 0l-1.11 1.11a15.3 15.3 0 0 1-3.58-3.58l1.11-1.11a.99.99 0 0 0 0-1.41L8.98 2.24a.99.99 0 0 0-.91-.25l-2.78.7c-.29.07-.53.3-.6.6L4 6.07c-.06.24.01.49.16.69 1.09 1.48 2.35 2.93 3.79 4.37z",
+    {
+      x,
+      y,
+      scale: 0.75,
+      color,
+    }
+  );
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -172,9 +284,11 @@ export async function GET(
   });
 
   // FECHA
-  const fecha = new Date(
-    presupuesto.created_at
-  ).toLocaleDateString("es-AR");
+const fecha = new Intl.DateTimeFormat("es-AR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+}).format(new Date(presupuesto.created_at));
 
   page.drawRectangle({
     x: 365,
@@ -521,37 +635,60 @@ page.drawLine({
   }
 
   // PIE
-  page.drawRectangle({
-    x: 0,
-    y: 0,
-    width: 595.28,
-    height: 70,
-    color: beigePie,
-  });
+page.drawRectangle({
+  x: 0,
+  y: 0,
+  width: 595.28,
+  height: 70,
+  color: beigePie,
+});
 
-  page.drawText(DIRECCION_NEGOCIO, {
-    x: 55,
-    y: 31,
-    size: 8,
-    font: regular,
-    color: negro,
-  });
+// ICONOS
+dibujarIconoUbicacion(
+  page,
+  40,
+  27,
+  negro
+);
 
-  page.drawText(EMAIL_NEGOCIO, {
-    x: 245,
-    y: 31,
-    size: 8,
-    font: regular,
-    color: negro,
-  });
+dibujarIconoEmail(
+  page,
+  230,
+  29,
+  negro
+);
 
-  page.drawText(TELEFONO_NEGOCIO, {
-    x: 455,
-    y: 31,
-    size: 8,
-    font: regular,
-    color: negro,
-  });
+dibujarIconoTelefono(
+  page,
+  440,
+  28,
+  negro
+);
+
+// DATOS DEL NEGOCIO
+page.drawText(DIRECCION_NEGOCIO, {
+  x: 58,
+  y: 31,
+  size: 8,
+  font: regular,
+  color: negro,
+});
+
+page.drawText(EMAIL_NEGOCIO, {
+  x: 248,
+  y: 31,
+  size: 8,
+  font: regular,
+  color: negro,
+});
+
+page.drawText(TELEFONO_NEGOCIO, {
+  x: 458,
+  y: 31,
+  size: 8,
+  font: regular,
+  color: negro,
+});
 
   const pdfBytes = await pdfDoc.save();
 
