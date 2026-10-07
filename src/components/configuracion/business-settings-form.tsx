@@ -119,9 +119,8 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
           <label className="text-sm font-medium text-neutral-700">
             Tiempo máximo de espera (min)
           </label>
-          <Input
+           <Input
             type="number"
-            step="5"
             min="1"
             {...register("expiracion_turno_min", { valueAsNumber: true })}
           />
@@ -141,7 +140,6 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
         </label>
         <Input
           type="number"
-          step="5"
           min="1"
           {...register("aviso_sin_tomar_min", { valueAsNumber: true })}
         />
