@@ -13,7 +13,7 @@ export function Sidebar({ rol }: { rol: UserRole }) {
   const primerIndiceAdmin = items.findIndex((item) => item.soloAdmin);
 
   return (
-    <aside className="w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-[#EDD9C4] p-3 flex flex-col">
+    <aside className="hidden lg:flex w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-[#EDD9C4] p-3 flex-col overflow-y-auto">
       <div className="mb-3 px-1">
         <Image
           src="/logo.png"

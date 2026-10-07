@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+:root {
+  --background: #F6E4D3;
+  --foreground: #4A3428;
+}
+
+/* Tokens de la paleta (opcionales: permiten usar bg-brand, text-ink, border-line, etc.) */
+@theme {
+  --color-brand: #6B4635;
+  --color-brand-dark: #5A3A2C;
+  --color-ink: #4A3428;
+  --color-muted: #9C8577;
+  --color-line: #EDD9C4;
+  --color-cream: #F6E4D3;
+  --color-soft: #F3E5D6;
+  --color-softer: #FBF3EA;
+  --color-danger: #B1543A;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -22,4 +40,23 @@ h1, h2, h3 {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge nuevo */
+}
+
+/* iOS hace zoom al enfocar campos con fuente menor a 16px */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Respeta a quienes desactivan las animaciones en su dispositivo */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
