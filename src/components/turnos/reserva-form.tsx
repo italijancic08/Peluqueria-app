@@ -56,7 +56,9 @@ type Paso = 1 | 2 | 3;
       return;
     }
 
-    router.push(`/turnos/confirmacion?numero=${resultado.data.numero}`);
+    router.push(
+      `/turnos/confirmacion?numero=${resultado.data.numero}&token=${resultado.data.token}`
+    );
   }
 
   return (

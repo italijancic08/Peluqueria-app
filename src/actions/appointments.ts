@@ -7,6 +7,8 @@ import { checkAuth } from "@/lib/auth/guards";
 import { calcularSlotsDelDia } from "@/lib/calculations/availability";
 import { normalizarTelefono } from "@/lib/format";
 import { reservaPublicaSchema, turnoInternoSchema } from "@/lib/validations/appointment";
+import { motivoSchema } from "@/lib/validations/reprogramacion";
+import { cancelarTurnoComun } from "@/lib/turnos/operaciones";
 import type { ActionResult } from "@/types/models";
 
 export async function obtenerDisponibilidad(
@@ -126,7 +128,7 @@ async function verificarHorarioDisponible(
 
 export async function crearTurnoPublico(
   valores: unknown
-): Promise<ActionResult<{ numero: number }>> {
+): Promise<ActionResult<{ numero: number; token: string }>> {
   const parsed = reservaPublicaSchema.safeParse(valores);
   if (!parsed.success) {
     return {
@@ -190,7 +192,7 @@ export async function crearTurnoPublico(
       origen: "PUBLICO",
       estado: "CONFIRMADO",
     })
-    .select("id, numero")
+    .select("id, numero, token_gestion")
     .single();
 
   if (errorTurno || !turno) {
@@ -229,7 +231,7 @@ export async function crearTurnoPublico(
     return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo. Contactanos." };
   }
 
-  return { ok: true, data: { numero: turno.numero } };
+  return { ok: true, data: { numero: turno.numero, token: turno.token_gestion } };
 }
 
 export async function crearTurnoInterno(
@@ -336,23 +338,23 @@ export async function crearTurnoInterno(
   return { ok: true, data: { id: turno.id } };
 }
 
-export async function cancelarTurno(id: string): Promise<ActionResult> {
+export async function cancelarTurno(id: string, motivo?: string): Promise<ActionResult> {
   const perfil = await checkAuth();
   if (!perfil) return { ok: false, error: "No autorizado." };
 
+  const m = motivoSchema.safeParse(motivo ?? "");
+  if (!m.success) {
+    return { ok: false, error: "El motivo puede tener hasta 500 caracteres." };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("appointments")
-    .update({ estado: "CANCELADO" })
-    .eq("id", id);
-
-  if (error) return { ok: false, error: "No se pudo cancelar el turno." };
-
-  await supabase
-    .from("works")
-    .update({ estado: "CANCELADO" })
-    .eq("appointment_id", id)
-    .in("estado", ["DISPONIBLE", "TOMADO"]);
+  const res = await cancelarTurnoComun(
+    supabase,
+    id,
+    { tipo: "STAFF", profileId: perfil.id },
+    m.data
+  );
+  if (!res.ok) return res;
 
   revalidatePath("/agenda");
   revalidatePath("/trabajos");

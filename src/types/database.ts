@@ -97,6 +97,82 @@ export type Database = {
           },
         ]
       }
+      appointment_reschedules: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          estado: string
+          fecha_hora_fin_propuesta: string
+          fecha_hora_inicio_anterior: string
+          fecha_hora_inicio_propuesta: string
+          id: string
+          motivo: string | null
+          respondido_at: string | null
+          respondido_por: string | null
+          respondido_por_profile_id: string | null
+          respuesta_motivo: string | null
+          solicitado_por: string
+          solicitado_por_profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          estado?: string
+          fecha_hora_fin_propuesta: string
+          fecha_hora_inicio_anterior: string
+          fecha_hora_inicio_propuesta: string
+          id?: string
+          motivo?: string | null
+          respondido_at?: string | null
+          respondido_por?: string | null
+          respondido_por_profile_id?: string | null
+          respuesta_motivo?: string | null
+          solicitado_por: string
+          solicitado_por_profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          estado?: string
+          fecha_hora_fin_propuesta?: string
+          fecha_hora_inicio_anterior?: string
+          fecha_hora_inicio_propuesta?: string
+          id?: string
+          motivo?: string | null
+          respondido_at?: string | null
+          respondido_por?: string | null
+          respondido_por_profile_id?: string | null
+          respuesta_motivo?: string | null
+          solicitado_por?: string
+          solicitado_por_profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reschedules_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reschedules_respondido_por_profile_id_fkey"
+            columns: ["respondido_por_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reschedules_solicitado_por_profile_id_fkey"
+            columns: ["solicitado_por_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_services: {
         Row: {
           appointment_id: string
@@ -135,6 +211,11 @@ export type Database = {
       }
       appointments: {
         Row: {
+          cancelado_at: string | null
+          cancelado_por: string | null
+          cancelado_por_profile_id: string | null
+          motivo_cancelacion: string | null
+          token_gestion: string
           budget_id: string | null
           client_id: string
           comentario_cliente: string | null
@@ -150,6 +231,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancelado_at?: string | null
+          cancelado_por?: string | null
+          cancelado_por_profile_id?: string | null
+          motivo_cancelacion?: string | null
+          token_gestion?: string
           budget_id?: string | null
           client_id: string
           comentario_cliente?: string | null
@@ -165,6 +251,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancelado_at?: string | null
+          cancelado_por?: string | null
+          cancelado_por_profile_id?: string | null
+          motivo_cancelacion?: string | null
+          token_gestion?: string
           budget_id?: string | null
           client_id?: string
           comentario_cliente?: string | null
@@ -338,6 +429,7 @@ export type Database = {
           turnos_expiran: boolean
           expiracion_turno_min: number
           aviso_sin_tomar_min: number
+          anticipacion_cliente_horas: number
           updated_at: string
         }
         Insert: {
@@ -350,6 +442,7 @@ export type Database = {
           turnos_expiran?: boolean
           expiracion_turno_min?: number
           aviso_sin_tomar_min?: number
+          anticipacion_cliente_horas?: number
           updated_at?: string
         }
         Update: {
@@ -362,6 +455,7 @@ export type Database = {
           turnos_expiran?: boolean
           expiracion_turno_min?: number
           aviso_sin_tomar_min?: number
+          anticipacion_cliente_horas?: number
           updated_at?: string
         }
         Relationships: []
@@ -624,6 +718,63 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          destinatario: string
+          enviada_at: string | null
+          error: string | null
+          estado: string
+          id: string
+          intentos: number
+          payload: Json
+          reschedule_id: string | null
+          tipo: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          destinatario: string
+          enviada_at?: string | null
+          error?: string | null
+          estado?: string
+          id?: string
+          intentos?: number
+          payload?: Json
+          reschedule_id?: string | null
+          tipo: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          destinatario?: string
+          enviada_at?: string | null
+          error?: string | null
+          estado?: string
+          id?: string
+          intentos?: number
+          payload?: Json
+          reschedule_id?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_reschedule_id_fkey"
+            columns: ["reschedule_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_reschedules"
             referencedColumns: ["id"]
           },
         ]

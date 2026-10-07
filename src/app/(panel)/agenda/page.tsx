@@ -5,6 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { SelectorFechaAgenda } from "@/components/turnos/selector-fecha-agenda";
 import { CancelarTurnoButton } from "@/components/turnos/cancelar-turno-button";
+import {
+  ReprogramarTurnoButton,
+  RetirarPropuestaButton,
+} from "@/components/turnos/reprogramar-turno-button";
+import {
+  SolicitudesPendientes,
+  type SolicitudPendienteItem,
+} from "@/components/turnos/solicitudes-pendientes";
 import { mostrarHora } from "@/lib/dates";
 import { estadoTurnoVista } from "@/lib/estado-turno";
 
@@ -30,20 +38,51 @@ export default async function TurnosPage({
   const { data: turnos, error } = await supabase
     .from("appointments")
     .select(
-      "*, clients(nombre, apellido, telefono), works(estado, profile_id, profiles(nombre, apellido))"
+      "*, clients(nombre, apellido, telefono), works(estado, profile_id, profiles(nombre, apellido)), appointment_reschedules(id, estado, solicitado_por)"
     )
     .gte("fecha_hora_inicio", `${fechaConsulta}T00:00:00`)
     .lt("fecha_hora_inicio", `${fechaConsulta}T23:59:59`)
     .order("fecha_hora_inicio");
 
+  // Pedidos de reprogramación de clientes que esperan respuesta (de cualquier día)
+  const { data: solicitudesRaw } = await supabase
+    .from("appointment_reschedules")
+    .select(
+      "id, motivo, fecha_hora_inicio_propuesta, created_at, appointments!inner(numero, estado, fecha_hora_inicio, clients(nombre, apellido, telefono))"
+    )
+    .eq("estado", "PENDIENTE")
+    .eq("solicitado_por", "CLIENTE")
+    .eq("appointments.estado", "CONFIRMADO")
+    .order("created_at");
+
+  const solicitudes: SolicitudPendienteItem[] = (solicitudesRaw ?? []).flatMap((s) => {
+    const turno = Array.isArray(s.appointments) ? s.appointments[0] : s.appointments;
+    if (!turno) return [];
+    const cliente = Array.isArray(turno.clients) ? turno.clients[0] : turno.clients;
+    return [
+      {
+        id: s.id,
+        numero: turno.numero,
+        cliente: cliente ? `${cliente.apellido}, ${cliente.nombre}` : "—",
+        telefono: cliente?.telefono ?? null,
+        inicioActual: turno.fecha_hora_inicio,
+        inicioPropuesto: s.fecha_hora_inicio_propuesta,
+        motivo: s.motivo,
+        creadaEl: s.created_at,
+      },
+    ];
+  });
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">Turnos</h1>
-              <Link href="/agenda/nuevo">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-[#4A3428]">Turnos</h1>
+        <Link href="/agenda/nuevo">
           <Button>Nuevo turno</Button>
         </Link>
       </div>
+
+      <SolicitudesPendientes solicitudes={solicitudes} />
 
       <SelectorFechaAgenda fecha={fechaConsulta} />
 
@@ -79,6 +118,8 @@ export default async function TurnosPage({
                 : trabajo?.profile_id
                   ? "Asignado"
                   : "Sin asignar";
+              const pendiente =
+                (t.appointment_reschedules ?? []).find((r) => r.estado === "PENDIENTE") ?? null;
 
               return (
                 <Tr key={t.id}>
@@ -88,10 +129,36 @@ export default async function TurnosPage({
                   </Td>
                   <Td>{atiende}</Td>
                   <Td>
-                    <Badge variant={vista.variante}>{vista.etiqueta}</Badge>
+                    <div className="flex flex-col items-start gap-1">
+                      <Badge variant={vista.variante}>{vista.etiqueta}</Badge>
+                      {pendiente?.solicitado_por === "CLIENTE" && (
+                        <Badge variant="warning">Pidió reprogramar</Badge>
+                      )}
+                      {pendiente?.solicitado_por === "STAFF" && (
+                        <Badge variant="neutral">Esperando al cliente</Badge>
+                      )}
+                      {t.estado === "CANCELADO" && t.cancelado_por && (
+                        <span className="max-w-[16rem] break-words text-xs text-[#9C8577]">
+                          {t.cancelado_por === "CLIENTE"
+                            ? "Canceló el cliente"
+                            : t.cancelado_por === "SISTEMA"
+                              ? "Expiró"
+                              : "Canceló la peluquería"}
+                          {t.motivo_cancelacion ? `: ${t.motivo_cancelacion}` : ""}
+                        </span>
+                      )}
+                    </div>
                   </Td>
                   <Td className="text-right">
-                    {vista.puedeCancelar && <CancelarTurnoButton id={t.id} />}
+                    <div className="flex flex-wrap items-center justify-end gap-1">
+                      {vista.puedeCancelar && !pendiente && (
+                        <ReprogramarTurnoButton id={t.id} />
+                      )}
+                      {pendiente?.solicitado_por === "STAFF" && (
+                        <RetirarPropuestaButton solicitudId={pendiente.id} />
+                      )}
+                      {vista.puedeCancelar && <CancelarTurnoButton id={t.id} />}
+                    </div>
                   </Td>
                 </Tr>
               );

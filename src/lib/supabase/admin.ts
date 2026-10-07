@@ -8,6 +8,8 @@ import type { Database } from "@/types/database";
  * Usos permitidos, y ninguno más:
  *  - Alta de empleados desde el panel de administración.
  *  - Reserva pública (crear cliente y turno sin sesión).
+ *  - Gestión del turno por parte del cliente (cancelar / reprogramar), siempre
+ *    validando el token secreto del turno.
  *
  * Toda operación hecha con este cliente debe validar permisos a mano,
  * porque la base ya no los va a validar.
