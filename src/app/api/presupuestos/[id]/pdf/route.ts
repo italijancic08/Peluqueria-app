@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 const DIRECCION_NEGOCIO = "Bolivar 499, Reconquista, Santa Fe";
 const EMAIL_NEGOCIO = "nadiatalijancic27@gmail.com";
-const TELEFONO_NEGOCIO = "3482 64 8654";
+const TELEFONO_NEGOCIO = "(3482) 64 8654";
 
 function formatearPesos(valor: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -147,7 +147,7 @@ function dibujarIconoTelefono(
     {
       x,
       y,
-      scale: 0.75,
+      scale: 0.85,
       color,
     }
   );
@@ -660,8 +660,8 @@ dibujarIconoEmail(
 
 dibujarIconoTelefono(
   page,
-  440,
-  28,
+  438,
+  40,
   negro
 );
 

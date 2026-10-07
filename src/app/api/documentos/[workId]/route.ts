@@ -6,12 +6,13 @@ import path from "path";
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
 import { formatearPesos } from "@/lib/format";
+import { mostrarFecha } from "@/lib/dates";
 
 export const runtime = "nodejs";
 
 const DIRECCION_NEGOCIO = "Bolivar 499, Reconquista, Santa Fe";
 const EMAIL_NEGOCIO = "nadiatalijancic27@gmail.com";
-const TELEFONO_NEGOCIO = "3482 64 8654";
+const TELEFONO_NEGOCIO = "(3482) 64 8654";
 
 function numeroDocumento(numero: number) {
   return String(numero).padStart(4, "0");
@@ -140,7 +141,7 @@ function dibujarIconoTelefono(
     {
       x,
       y,
-      scale: 0.75,
+      scale: 0.85,
       color,
     }
   );
@@ -270,9 +271,7 @@ export async function GET(
   );
 
   // FECHA
-  const fecha = new Date(
-    trabajo.created_at
-  ).toLocaleDateString("es-AR");
+  const fecha = mostrarFecha(trabajo.created_at);
 
   page.drawRectangle({
     x: 365,
@@ -656,8 +655,8 @@ dibujarIconoEmail(
 
 dibujarIconoTelefono(
   page,
-  440,
-  28,
+  438,
+  40,
   negro
 );
 
