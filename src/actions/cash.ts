@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { checkAuth } from "@/lib/auth/guards";
+import { checkAuth, checkAdmin } from "@/lib/auth/guards";
 import { movimientoManualSchema } from "@/lib/validations/cash";
+import { esMesValido } from "@/lib/calculations/caja";
 import type { ActionResult } from "@/types/models";
 
 export async function crearMovimientoManual(valores: unknown): Promise<ActionResult> {
@@ -38,7 +39,7 @@ export async function actualizarMovimientoManual(
   id: string,
   valores: unknown
 ): Promise<ActionResult> {
-  const perfil = await checkAuth();
+  const perfil = await checkAdmin();
   if (!perfil) return { ok: false, error: "No autorizado." };
 
   const parsed = movimientoManualSchema.safeParse(valores);
@@ -63,7 +64,7 @@ export async function actualizarMovimientoManual(
     return { ok: false, error: "Este movimiento viene de un cobro y no se puede editar acá." };
   }
 
-  const { error } = await supabase
+  const { data: actualizados, error } = await supabase
     .from("cash_movements")
     .update({
       tipo: parsed.data.tipo,
@@ -71,10 +72,40 @@ export async function actualizarMovimientoManual(
       monto: parsed.data.monto,
       descripcion: parsed.data.descripcion,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
-  if (error) return { ok: false, error: "No se pudo actualizar el movimiento." };
+  if (error) {
+    return {
+      ok: false,
+      error: error.message.includes("cerrado")
+        ? error.message
+        : "No se pudo actualizar el movimiento.",
+    };
+  }
+
+  if (!actualizados || actualizados.length === 0) {
+    return { ok: false, error: "No se pudo actualizar el movimiento. Solo un administrador puede editarlo." };
+  }
 
   revalidatePath("/caja");
+  return { ok: true, data: undefined };
+}
+
+
+export async function cerrarMes(mes: string): Promise<ActionResult> {
+  const perfil = await checkAdmin();
+  if (!perfil) return { ok: false, error: "Solo un administrador puede cerrar la caja." };
+
+  if (!esMesValido(mes)) return { ok: false, error: "Mes inválido." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cerrar_mes", { p_periodo: `${mes}-01` });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/caja");
+  revalidatePath("/caja/cierres");
+  revalidatePath("/dashboard");
   return { ok: true, data: undefined };
 }

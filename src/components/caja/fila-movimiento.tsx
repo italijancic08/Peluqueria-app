@@ -10,13 +10,15 @@ import { Tr, Td } from "@/components/ui/table";
 import { SelectorMedioPago, type MedioPagoValue } from "@/components/caja/selector-medio-pago";
 import { formatearPesos } from "@/lib/format";
 import { MEDIO_PAGO } from "@/constants/labels";
+import { mostrarFecha } from "@/lib/dates";
 import type { CashMovement } from "@/types/models";
 
 type Props = {
   movimiento: CashMovement & { works: { numero: number } | null };
+  puedeEditar: boolean;
 };
 
-export function FilaMovimiento({ movimiento: m }: Props) {
+export function FilaMovimiento({ movimiento: m, puedeEditar }: Props) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [tipo, setTipo] = useState<"INGRESO" | "EGRESO">(m.tipo as "INGRESO" | "EGRESO");
@@ -26,9 +28,9 @@ export function FilaMovimiento({ movimiento: m }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const esEditable = !m.work_id;
+  const esEditable = !m.work_id && puedeEditar;
   const esIngreso = m.tipo === "INGRESO";
-  const dia = new Date(m.created_at).getDate();
+  const dia = mostrarFecha(m.created_at, "d");
 
   async function guardar() {
     setError(null);

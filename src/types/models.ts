@@ -18,6 +18,7 @@ export type StockMovement = Tables["stock_movements"]["Row"];
 export type Payment = Tables["payments"]["Row"];
 export type EmployeeCommission = Tables["employee_commissions"]["Row"];
 export type CashMovement = Tables["cash_movements"]["Row"];
+export type CashClosure = Tables["cash_closures"]["Row"];
 export type EmployeeSettlement = Tables["employee_settlements"]["Row"];
 export type AccountMovement = Tables["account_movements"]["Row"];
 export type AccountMovementType = Enums["account_movement_type"];

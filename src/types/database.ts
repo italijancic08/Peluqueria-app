@@ -366,6 +366,56 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_closures: {
+        Row: {
+          caja_fisica_final: number
+          closed_at: string
+          closed_by: string | null
+          id: string
+          periodo: string
+          saldo_inicial_efectivo: number
+          total_efectivo: number
+          total_egresos: number
+          total_ingresos: number
+          total_tarjetas: number
+          total_transferencias: number
+        }
+        Insert: {
+          caja_fisica_final: number
+          closed_at?: string
+          closed_by?: string | null
+          id?: string
+          periodo: string
+          saldo_inicial_efectivo: number
+          total_efectivo: number
+          total_egresos: number
+          total_ingresos: number
+          total_tarjetas: number
+          total_transferencias: number
+        }
+        Update: {
+          caja_fisica_final?: number
+          closed_at?: string
+          closed_by?: string | null
+          id?: string
+          periodo?: string
+          saldo_inicial_efectivo?: number
+          total_efectivo?: number
+          total_egresos?: number
+          total_ingresos?: number
+          total_tarjetas?: number
+          total_transferencias?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_closures_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_movements: {
         Row: {
           created_at: string
@@ -1006,6 +1056,14 @@ export type Database = {
           fecha_inicio: string
           profile_id: string
         }[]
+      }
+      caja_fisica_inicial: {
+        Args: { p_periodo: string }
+        Returns: number
+      }
+      cerrar_mes: {
+        Args: { p_periodo: string }
+        Returns: string
       }
       cobrar_trabajo: {
         Args: { p_pagos: Json; p_work_id: string }

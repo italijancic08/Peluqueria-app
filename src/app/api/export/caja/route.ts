@@ -2,14 +2,8 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
-
-function primerYUltimoDia(mesISO: string) {
-  const [anio, mes] = mesISO.split("-").map(Number);
-  const primerDia = `${mesISO}-01`;
-  const ultimoDiaNum = new Date(anio, mes, 0).getDate();
-  const ultimoDia = `${mesISO}-${String(ultimoDiaNum).padStart(2, "0")}`;
-  return { primerDia, ultimoDia };
-}
+import { mostrarFecha } from "@/lib/dates";
+import { esMesValido, limitesDelMes, mesActualISO } from "@/lib/calculations/caja";
 
 const MEDIO_PAGO: Record<string, string> = {
   EFECTIVO: "Efectivo",
@@ -25,15 +19,16 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const mes = searchParams.get("mes") ?? new Date().toISOString().slice(0, 7);
-  const { primerDia, ultimoDia } = primerYUltimoDia(mes);
+  const mesParam = searchParams.get("mes");
+  const mes = mesParam && esMesValido(mesParam) ? mesParam : mesActualISO();
+  const { desde, hasta } = limitesDelMes(mes);
 
   const supabase = await createClient();
   const { data: movimientos, error } = await supabase
     .from("cash_movements")
     .select("*, works(numero)")
-    .gte("created_at", `${primerDia}T00:00:00`)
-    .lt("created_at", `${ultimoDia}T23:59:59`)
+    .gte("created_at", desde)
+    .lt("created_at", hasta)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -41,7 +36,7 @@ export async function GET(request: Request) {
   }
 
   const filas = (movimientos ?? []).map((m) => ({
-    Fecha: new Date(m.created_at).toLocaleDateString("es-AR"),
+    Fecha: mostrarFecha(m.created_at),
     Tipo: m.tipo === "INGRESO" ? "Ingreso" : "Egreso",
     Forma: MEDIO_PAGO[m.metodo] ?? m.metodo,
     Concepto: m.descripcion ?? "",
