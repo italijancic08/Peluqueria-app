@@ -32,20 +32,58 @@ export function PresupuestoForm({ servicios }: { servicios: Service[] }) {
       return;
     }
 
+    if (servicioIds.length === 0) {
+      setError("Elegí al menos un servicio.");
+      return;
+    }
+
     setEnviando(true);
+
     const resultado = await crearPresupuesto({
       clientId: cliente.id,
       servicioIds,
       notas,
     });
-    setEnviando(false);
 
     if (!resultado.ok) {
+      setEnviando(false);
       setError(resultado.error);
       return;
     }
 
-    router.push(RUTAS.presupuestos);
+    try {
+      const respuestaWord = await fetch(
+        `/api/presupuestos/${resultado.data.id}/word`
+      );
+
+      if (!respuestaWord.ok) {
+        throw new Error("No se pudo generar el presupuesto.");
+      }
+
+      const blob = await respuestaWord.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+
+      enlace.href = url;
+      enlace.download = `Presupuesto-${resultado.data.numero}.docx`;
+
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError(
+        "El presupuesto se creó correctamente, pero no se pudo generar el archivo Word."
+      );
+      setEnviando(false);
+      return;
+    }
+
+    setEnviando(false);
+
+    router.push(`${RUTAS.presupuestos}/${resultado.data.id}`);
     router.refresh();
   }
 

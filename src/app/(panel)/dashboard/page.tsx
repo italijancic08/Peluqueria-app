@@ -1,7 +1,22 @@
 import Link from "next/link";
 import {
-  CalendarCheck, Scissors, Wallet, HandCoins, PackageX, Banknote, FileText,
-  Users, FileSignature, Package, UserCog, Sparkles, ChartBar, Settings2, CalendarDays,
+  CalendarCheck,
+  Scissors,
+  Wallet,
+  HandCoins,
+  PackageX,
+  Banknote,
+  FileText,
+  Users,
+  FileSignature,
+  Package,
+  UserCog,
+  Sparkles,
+  ChartBar,
+  Settings2,
+  CalendarDays,
+  Landmark,
+  CircleUser,
 } from "lucide-react";
 import { QuickLinkCard } from "@/components/dashboard/quick-link-card";
 import { createClient } from "@/lib/supabase/server";
@@ -147,28 +162,51 @@ export default async function DashboardPage() {
   }
 
   // Vista de empleado
-  const [{ count: misTurnosHoy }, { data: misTrabajosPendientes }, { data: miComisionSemana }] =
-    await Promise.all([
-      supabase
-        .from("appointments")
-        .select("*", { count: "exact", head: true })
-        .eq("profile_id", perfil.id)
-        .gte("fecha_hora_inicio", hoyInicio.toISOString())
-        .lte("fecha_hora_inicio", hoyFin.toISOString())
-        .neq("estado", "CANCELADO"),
-      supabase
-        .from("works")
-        .select("id")
-        .eq("profile_id", perfil.id)
-        .in("estado", ["TOMADO", "EN_CURSO", "FINALIZADO"]),
-      supabase
-        .from("employee_commissions")
-        .select("monto")
-        .eq("profile_id", perfil.id)
-        .is("settlement_id", null),
-    ]);
+  const [
+    { count: misTurnosHoy },
+    { data: misTrabajosPendientes },
+    { data: miComisionSemana },
+    { data: movimientosEfectivoTodos },
+  ] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("*", { count: "exact", head: true })
+      .eq("profile_id", perfil.id)
+      .gte("fecha_hora_inicio", hoyInicio.toISOString())
+      .lte("fecha_hora_inicio", hoyFin.toISOString())
+      .neq("estado", "CANCELADO"),
 
-  const comisionPendiente = (miComisionSemana ?? []).reduce((acc, c) => acc + Number(c.monto), 0);
+    supabase
+      .from("works")
+      .select("id")
+      .eq("profile_id", perfil.id)
+      .in("estado", ["TOMADO", "EN_CURSO", "FINALIZADO"]),
+
+    supabase
+      .from("employee_commissions")
+      .select("monto")
+      .eq("profile_id", perfil.id)
+      .is("settlement_id", null),
+
+    supabase
+      .from("cash_movements")
+      .select("monto, tipo")
+      .eq("metodo", "EFECTIVO"),
+  ]);
+
+  let cajaFisica = 0;
+
+  for (const movimiento of movimientosEfectivoTodos ?? []) {
+    cajaFisica +=
+      movimiento.tipo === "INGRESO"
+        ? Number(movimiento.monto)
+        : -Number(movimiento.monto);
+  }
+
+  const comisionPendiente = (miComisionSemana ?? []).reduce(
+    (acc, c) => acc + Number(c.monto),
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -179,10 +217,15 @@ export default async function DashboardPage() {
 
       <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/agenda">
-          <StatCard label="Mis turnos hoy" value={String(misTurnosHoy ?? 0)} icon={CalendarCheck} />
+          <StatCard
+            label="Mis turnos hoy"
+            value={String(misTurnosHoy ?? 0)}
+            icon={CalendarCheck}
+          />
         </Link>
+
         <Link href="/trabajos">
           <StatCard
             label="Mis trabajos en curso"
@@ -190,9 +233,100 @@ export default async function DashboardPage() {
             icon={Scissors}
           />
         </Link>
-        <Link href="/liquidaciones">
-          <StatCard label="Mi comisión sin liquidar" value={formatearPesos(comisionPendiente)} icon={HandCoins} />
+
+        <Link href="/caja">
+          <StatCard
+            label="Caja física"
+            value={formatearPesos(cajaFisica)}
+            icon={Banknote}
+          />
         </Link>
+
+        <Link href="/liquidaciones">
+          <StatCard
+            label="Mi comisión sin liquidar"
+            value={formatearPesos(comisionPendiente)}
+            icon={HandCoins}
+          />
+        </Link>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-medium text-[#4A3428] mb-3">
+          Accesos rápidos
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <QuickLinkCard
+            href="/clientes"
+            label="Clientes"
+            descripcion="Buscar y editar clientes"
+            icon={Users}
+          />
+
+          <QuickLinkCard
+            href="/agenda"
+            label="Turnos"
+            descripcion="Ver y gestionar turnos"
+            icon={CalendarDays}
+          />
+
+          <QuickLinkCard
+            href="/presupuestos"
+            label="Presupuestos"
+            descripcion="Crear y consultar presupuestos"
+            icon={FileSignature}
+          />
+
+          <QuickLinkCard
+            href="/trabajos"
+            label="Trabajos"
+            descripcion="Gestionar trabajos"
+            icon={Scissors}
+          />
+
+          <QuickLinkCard
+            href="/stock"
+            label="Stock"
+            descripcion="Productos y movimientos"
+            icon={Package}
+          />
+
+          <QuickLinkCard
+            href="/caja"
+            label="Caja"
+            descripcion="Consultar y registrar movimientos"
+            icon={Wallet}
+          />
+
+          <QuickLinkCard
+            href="/cuenta-corriente"
+            label="Cuenta corriente"
+            descripcion="Consultar cuentas de clientes"
+            icon={Landmark}
+          />
+
+          <QuickLinkCard
+            href="/liquidaciones"
+            label="Liquidaciones"
+            descripcion="Consultar mis comisiones"
+            icon={HandCoins}
+          />
+
+          <QuickLinkCard
+            href="/documentos"
+            label="Documentos"
+            descripcion="Comprobantes y documentos"
+            icon={FileText}
+          />
+
+          <QuickLinkCard
+            href="/perfil"
+            label="Mi perfil"
+            descripcion="Mis datos y configuración"
+            icon={CircleUser}
+          />
+        </div>
       </div>
     </div>
   );

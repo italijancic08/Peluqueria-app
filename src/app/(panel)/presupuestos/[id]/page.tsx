@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EstadoPresupuestoActions } from "@/components/presupuestos/estado-presupuesto-actions";
+import { DescargarWordButton } from "@/components/presupuestos/descargar-word-button";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_PRESUPUESTO } from "@/constants/labels";
@@ -79,9 +80,16 @@ export default async function PresupuestoDetallePage({
         </div>
       )}
 
-      <p className="text-xs text-neutral-400">
-        Creado el {mostrarFechaHora(presupuesto.created_at)}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-neutral-400">
+          Creado el {mostrarFechaHora(presupuesto.created_at)}
+        </p>
+
+        <DescargarWordButton
+          presupuestoId={presupuesto.id}
+          numero={presupuesto.numero}
+        />
+      </div>
 
       {presupuesto.estado === "PENDIENTE" && (
         <div className="pt-2 border-t border-neutral-200">
