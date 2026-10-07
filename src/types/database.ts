@@ -432,6 +432,7 @@ export type Database = {
           cuenta_corriente_habilitada: boolean
           dni: string | null
           email: string | null
+          direccion: string | null
           id: string
           nombre: string
           notas: string | null
@@ -446,6 +447,7 @@ export type Database = {
           cuenta_corriente_habilitada?: boolean
           dni?: string | null
           email?: string | null
+          direccion?: string | null
           id?: string
           nombre: string
           notas?: string | null
@@ -460,6 +462,7 @@ export type Database = {
           cuenta_corriente_habilitada?: boolean
           dni?: string | null
           email?: string | null
+          direccion?: string | null
           id?: string
           nombre?: string
           notas?: string | null

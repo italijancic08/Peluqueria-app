@@ -28,9 +28,18 @@ export function ClienteForm(props: ClienteFormProps) {
           telefono: props.cliente.telefono,
           dni: props.cliente.dni ?? "",
           email: props.cliente.email ?? "",
+          direccion: props.cliente.direccion ?? "",
           notas: props.cliente.notas ?? "",
         }
-      : { nombre: "", apellido: "", telefono: "", dni: "", email: "", notas: "" };
+      : {
+          nombre: "",
+          apellido: "",
+          telefono: "",
+          dni: "",
+          email: "",
+          direccion: "",
+          notas: "",
+        };
 
   const {
     register,
@@ -52,17 +61,25 @@ export function ClienteForm(props: ClienteFormProps) {
 
     if (!resultado.ok) {
       setErrorGeneral(resultado.error);
+
       if (resultado.fieldErrors) {
         for (const [campo, mensajes] of Object.entries(resultado.fieldErrors)) {
           if (mensajes?.[0]) {
-            setError(campo as keyof ClienteFormValues, { message: mensajes[0] });
+            setError(campo as keyof ClienteFormValues, {
+              message: mensajes[0],
+            });
           }
         }
       }
+
       return;
     }
 
-    const idDestino = props.modo === "crear" ? resultado.data.id : props.cliente.id;
+    const idDestino =
+      props.modo === "crear"
+        ? resultado.data.id
+        : props.cliente.id;
+
     router.push(RUTAS.cliente(idDestino));
     router.refresh();
   }
@@ -77,14 +94,19 @@ export function ClienteForm(props: ClienteFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-neutral-700">Nombre</label>
+          <label className="text-sm font-medium text-neutral-700">
+            Nombre
+          </label>
           <Input {...register("nombre")} />
           {errors.nombre && (
             <p className="text-xs text-red-600">{errors.nombre.message}</p>
           )}
         </div>
+
         <div className="space-y-1">
-          <label className="text-sm font-medium text-neutral-700">Apellido</label>
+          <label className="text-sm font-medium text-neutral-700">
+            Apellido
+          </label>
           <Input {...register("apellido")} />
           {errors.apellido && (
             <p className="text-xs text-red-600">{errors.apellido.message}</p>
@@ -93,7 +115,9 @@ export function ClienteForm(props: ClienteFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-neutral-700">Teléfono</label>
+        <label className="text-sm font-medium text-neutral-700">
+          Teléfono
+        </label>
         <Input {...register("telefono")} placeholder="Ej: 3482 123456" />
         {errors.telefono && (
           <p className="text-xs text-red-600">{errors.telefono.message}</p>
@@ -102,11 +126,19 @@ export function ClienteForm(props: ClienteFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-neutral-700">DNI (opcional)</label>
+          <label className="text-sm font-medium text-neutral-700">
+            DNI (opcional)
+          </label>
           <Input {...register("dni")} />
+          {errors.dni && (
+            <p className="text-xs text-red-600">{errors.dni.message}</p>
+          )}
         </div>
+
         <div className="space-y-1">
-          <label className="text-sm font-medium text-neutral-700">Email (opcional)</label>
+          <label className="text-sm font-medium text-neutral-700">
+            Email (opcional)
+          </label>
           <Input type="email" {...register("email")} />
           {errors.email && (
             <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -115,7 +147,22 @@ export function ClienteForm(props: ClienteFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-neutral-700">Notas (opcional)</label>
+        <label className="text-sm font-medium text-neutral-700">
+          Dirección (opcional)
+        </label>
+        <Input
+          {...register("direccion")}
+          placeholder="Ej: Obligado 750, Reconquista"
+        />
+        {errors.direccion && (
+          <p className="text-xs text-red-600">{errors.direccion.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-neutral-700">
+          Notas (opcional)
+        </label>
         <Textarea rows={3} {...register("notas")} />
       </div>
 
@@ -127,7 +174,12 @@ export function ClienteForm(props: ClienteFormProps) {
             ? "Crear cliente"
             : "Guardar cambios"}
         </Button>
-        <Button type="button" variant="secondary" onClick={() => router.back()}>
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => router.back()}
+        >
           Cancelar
         </Button>
       </div>

@@ -1,126 +1,355 @@
-import { FileText, FileSpreadsheet } from "lucide-react";
+import {
+  FileText,
+  FileSpreadsheet,
+} from "lucide-react";
+
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/guards";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFecha } from "@/lib/dates";
 
-type MesReporte = { valor: string; etiqueta: string };
+type MesReporte = {
+  valor: string;
+  etiqueta: string;
+};
 
-function ultimosMeses(cantidad: number): MesReporte[] {
+function ultimosMeses(
+  cantidad: number
+): MesReporte[] {
   const hoy = new Date();
   const resultado: MesReporte[] = [];
 
   for (let i = 0; i < cantidad; i++) {
-    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-    const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const etiquetaCruda = d.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-    const etiqueta = etiquetaCruda.charAt(0).toUpperCase() + etiquetaCruda.slice(1);
-    resultado.push({ valor, etiqueta });
+    const d = new Date(
+      hoy.getFullYear(),
+      hoy.getMonth() - i,
+      1
+    );
+
+    const valor =
+      `${d.getFullYear()}-${String(
+        d.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+    const etiquetaCruda =
+      d.toLocaleDateString("es-AR", {
+        month: "long",
+        year: "numeric",
+      });
+
+    const etiqueta =
+      etiquetaCruda
+        .charAt(0)
+        .toUpperCase() +
+      etiquetaCruda.slice(1);
+
+    resultado.push({
+      valor,
+      etiqueta,
+    });
   }
 
   return resultado;
 }
 
-function FilaTrabajo({ t }: { t: any }) {
-  const nombreCliente = t.clients ? `${t.clients.apellido}, ${t.clients.nombre}` : "";
-  const enlace = "/api/documentos/" + t.id;
+function FilaTrabajo({
+  t,
+}: {
+  t: any;
+}) {
+  const nombreCliente = t.clients
+    ? `${t.clients.apellido}, ${t.clients.nombre}`
+    : "";
 
   return (
-    <a key={t.id} href={enlace} download className="flex items-center justify-between px-3 py-2 text-sm hover:bg-neutral-50">
+    <a
+      href={`/api/documentos/${t.id}`}
+      download={`Factura-${String(
+        t.numero
+      ).padStart(4, "0")}.pdf`}
+      className="flex items-center justify-between px-3 py-2 text-sm hover:bg-neutral-50"
+    >
       <div className="flex items-center gap-3">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F3E5D6]">
           <FileText className="h-4 w-4 text-[#6B4635]" />
         </span>
+
         <div>
-          <p className="text-neutral-900">Trabajo #{t.numero} — {nombreCliente}</p>
-          <p className="text-xs text-neutral-500">{mostrarFecha(t.created_at)}</p>
+          <p className="text-neutral-900">
+            Factura #{t.numero} —{" "}
+            {nombreCliente}
+          </p>
+
+          <p className="text-xs text-neutral-500">
+            {mostrarFecha(
+              t.created_at
+            )}
+          </p>
         </div>
       </div>
-      <span className="text-neutral-500">{formatearPesos(t.total)}</span>
+
+      <span className="text-neutral-500">
+        {formatearPesos(t.total)}
+      </span>
     </a>
   );
 }
 
-function FilaMes({ m }: { m: MesReporte }) {
-  const enlace = "/api/export/caja?mes=" + m.valor;
+function FilaPresupuesto({
+  p,
+}: {
+  p: any;
+}) {
+  const nombreCliente = p.clients
+    ? `${p.clients.apellido}, ${p.clients.nombre}`
+    : "";
 
   return (
-    <a key={m.valor} href={enlace} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-neutral-50">
+    <a
+      href={`/api/presupuestos/${p.id}/pdf`}
+      download={`Presupuesto-${String(
+        p.numero
+      ).padStart(4, "0")}.pdf`}
+      className="flex items-center justify-between px-3 py-2 text-sm hover:bg-neutral-50"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F3E5D6]">
+          <FileText className="h-4 w-4 text-[#6B4635]" />
+        </span>
+
+        <div>
+          <p className="text-neutral-900">
+            Presupuesto #{p.numero} —{" "}
+            {nombreCliente}
+          </p>
+
+          <p className="text-xs text-neutral-500">
+            {mostrarFecha(
+              p.created_at
+            )}
+          </p>
+        </div>
+      </div>
+
+      <span className="text-neutral-500">
+        {formatearPesos(p.total)}
+      </span>
+    </a>
+  );
+}
+
+function FilaMes({
+  m,
+}: {
+  m: MesReporte;
+}) {
+  return (
+    <a
+      href={
+        "/api/export/caja?mes=" +
+        m.valor
+      }
+      className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-neutral-50"
+    >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F3E5D6]">
         <FileSpreadsheet className="h-4 w-4 text-[#6B4635]" />
       </span>
-      <span className="text-neutral-900">Caja de {m.etiqueta} (Excel)</span>
+
+      <span className="text-neutral-900">
+        Caja de {m.etiqueta} (Excel)
+      </span>
     </a>
   );
 }
 
 export default async function DocumentosPage() {
   const perfil = await requireAuth();
-  const supabase = await createClient();
+  const supabase =
+    await createClient();
 
-  let query = supabase
+  let queryTrabajos = supabase
     .from("works")
-    .select("*, clients(nombre, apellido)")
+    .select(
+      "*, clients(nombre, apellido)"
+    )
     .neq("estado", "DISPONIBLE")
     .neq("estado", "CANCELADO")
-    .order("created_at", { ascending: false })
+    .order("created_at", {
+      ascending: false,
+    })
     .limit(30);
 
   if (perfil.rol !== "ADMIN") {
-    query = query.eq("profile_id", perfil.id);
+    queryTrabajos =
+      queryTrabajos.eq(
+        "profile_id",
+        perfil.id
+      );
   }
 
-  const { data: trabajos } = await query;
-  const listaTrabajos = trabajos ?? [];
+  const { data: trabajos } =
+    await queryTrabajos;
 
-  const mesesCandidatos = ultimosMeses(12);
-  let mesesConDatos: MesReporte[] = [];
+  const listaTrabajos =
+    trabajos ?? [];
+
+  let queryPresupuestos = supabase
+    .from("budgets")
+    .select(
+      "id, numero, total, created_at, created_by, clients(nombre, apellido)"
+    )
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(30);
+
+  if (perfil.rol !== "ADMIN") {
+    queryPresupuestos =
+      queryPresupuestos.eq(
+        "created_by",
+        perfil.id
+      );
+  }
+
+  const { data: presupuestos } =
+    await queryPresupuestos;
+
+  const listaPresupuestos =
+    presupuestos ?? [];
+
+  const mesesCandidatos =
+    ultimosMeses(12);
+
+  let mesesConDatos: MesReporte[] =
+    [];
 
   if (perfil.rol === "ADMIN") {
-    const { data: movimientos } = await supabase
-      .from("cash_movements")
-      .select("created_at")
-      .gte("created_at", `${mesesCandidatos[mesesCandidatos.length - 1].valor}-01T00:00:00`);
+    const { data: movimientos } =
+      await supabase
+        .from("cash_movements")
+        .select("created_at")
+        .gte(
+          "created_at",
+          `${mesesCandidatos[
+            mesesCandidatos.length - 1
+          ].valor}-01T00:00:00`
+        );
 
-    const mesesConMovimiento = new Set(
-      (movimientos ?? []).map((m) => new Date(m.created_at).toISOString().slice(0, 7))
-    );
+    const mesesConMovimiento =
+      new Set(
+        (movimientos ?? []).map(
+          (m) =>
+            new Date(
+              m.created_at
+            )
+              .toISOString()
+              .slice(0, 7)
+        )
+      );
 
-    mesesConDatos = mesesCandidatos.filter((m) => mesesConMovimiento.has(m.valor));
+    mesesConDatos =
+      mesesCandidatos.filter((m) =>
+        mesesConMovimiento.has(
+          m.valor
+        )
+      );
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900">Documentos</h1>
-        <p className="text-sm text-neutral-500">Comprobantes y reportes descargables.</p>
+        <h1 className="text-xl font-semibold text-neutral-900">
+          Documentos
+        </h1>
+
+        <p className="text-sm text-neutral-500">
+          Facturas, presupuestos y
+          reportes descargables.
+        </p>
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-neutral-700 mb-2">Comprobantes de trabajos</h2>
+        <h2 className="text-sm font-medium text-neutral-700 mb-2">
+          Presupuestos
+        </h2>
 
-        {listaTrabajos.length === 0 && (
-          <p className="text-sm text-neutral-500">Todavía no hay trabajos con comprobante disponible.</p>
+        {listaPresupuestos.length ===
+          0 && (
+          <p className="text-sm text-neutral-500">
+            Todavía no hay
+            presupuestos disponibles.
+          </p>
         )}
 
-        {listaTrabajos.length > 0 && (
+        {listaPresupuestos.length >
+          0 && (
           <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 bg-white">
-            {listaTrabajos.map((t) => <FilaTrabajo key={t.id} t={t} />)}
+            {listaPresupuestos.map(
+              (p) => (
+                <FilaPresupuesto
+                  key={p.id}
+                  p={p}
+                />
+              )
+            )}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-sm font-medium text-neutral-700 mb-2">
+          Facturas
+        </h2>
+
+        {listaTrabajos.length ===
+          0 && (
+          <p className="text-sm text-neutral-500">
+            Todavía no hay facturas
+            disponibles.
+          </p>
+        )}
+
+        {listaTrabajos.length >
+          0 && (
+          <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 bg-white">
+            {listaTrabajos.map(
+              (t) => (
+                <FilaTrabajo
+                  key={t.id}
+                  t={t}
+                />
+              )
+            )}
           </div>
         )}
       </div>
 
       {perfil.rol === "ADMIN" && (
         <div>
-          <h2 className="text-sm font-medium text-neutral-700 mb-2">Reportes de caja</h2>
+          <h2 className="text-sm font-medium text-neutral-700 mb-2">
+            Reportes de caja
+          </h2>
 
-          {mesesConDatos.length === 0 && (
-            <p className="text-sm text-neutral-500">Todavía no hay movimientos de caja para exportar.</p>
+          {mesesConDatos.length ===
+            0 && (
+            <p className="text-sm text-neutral-500">
+              Todavía no hay
+              movimientos de caja para
+              exportar.
+            </p>
           )}
 
-          {mesesConDatos.length > 0 && (
+          {mesesConDatos.length >
+            0 && (
             <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 bg-white">
-              {mesesConDatos.map((m) => <FilaMes key={m.valor} m={m} />)}
+              {mesesConDatos.map(
+                (m) => (
+                  <FilaMes
+                    key={m.valor}
+                    m={m}
+                  />
+                )
+              )}
             </div>
           )}
         </div>

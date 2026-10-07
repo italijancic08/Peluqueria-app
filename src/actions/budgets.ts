@@ -58,6 +58,8 @@ export async function crearPresupuesto(
   }
 
   revalidatePath("/presupuestos");
+  revalidatePath("/documentos");
+
   return { ok: true, data: presupuesto };
 }
 

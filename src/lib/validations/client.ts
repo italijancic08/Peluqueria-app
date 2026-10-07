@@ -12,6 +12,7 @@ export const clienteSchema = z.object({
     .max(150)
     .optional()
     .or(z.literal("")),
+  direccion: z.string().trim().max(200).optional().or(z.literal("")),
   notas: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 

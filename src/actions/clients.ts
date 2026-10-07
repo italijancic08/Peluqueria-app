@@ -6,11 +6,17 @@ import { checkAuth, checkAdmin } from "@/lib/auth/guards";
 import { clienteSchema } from "@/lib/validations/client";
 import type { ActionResult, Client } from "@/types/models";
 
-export async function crearCliente(valores: unknown): Promise<ActionResult<Client>> {
+export async function crearCliente(
+  valores: unknown
+): Promise<ActionResult<Client>> {
   const perfil = await checkAuth();
-  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  if (!perfil) {
+    return { ok: false, error: "No autorizado." };
+  }
 
   const parsed = clienteSchema.safeParse(valores);
+
   if (!parsed.success) {
     return {
       ok: false,
@@ -20,6 +26,7 @@ export async function crearCliente(valores: unknown): Promise<ActionResult<Clien
   }
 
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("clients")
     .insert({
@@ -28,6 +35,7 @@ export async function crearCliente(valores: unknown): Promise<ActionResult<Clien
       telefono: parsed.data.telefono,
       dni: parsed.data.dni || null,
       email: parsed.data.email || null,
+      direccion: parsed.data.direccion || null,
       notas: parsed.data.notas || null,
     })
     .select()
@@ -35,12 +43,20 @@ export async function crearCliente(valores: unknown): Promise<ActionResult<Clien
 
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, error: "Ya existe un cliente con ese teléfono." };
+      return {
+        ok: false,
+        error: "Ya existe un cliente con ese teléfono.",
+      };
     }
-    return { ok: false, error: "No se pudo crear el cliente." };
+
+    return {
+      ok: false,
+      error: "No se pudo crear el cliente.",
+    };
   }
 
   revalidatePath("/clientes");
+
   return { ok: true, data };
 }
 
@@ -49,9 +65,13 @@ export async function actualizarCliente(
   valores: unknown
 ): Promise<ActionResult<Client>> {
   const perfil = await checkAuth();
-  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  if (!perfil) {
+    return { ok: false, error: "No autorizado." };
+  }
 
   const parsed = clienteSchema.safeParse(valores);
+
   if (!parsed.success) {
     return {
       ok: false,
@@ -61,6 +81,7 @@ export async function actualizarCliente(
   }
 
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("clients")
     .update({
@@ -69,6 +90,7 @@ export async function actualizarCliente(
       telefono: parsed.data.telefono,
       dni: parsed.data.dni || null,
       email: parsed.data.email || null,
+      direccion: parsed.data.direccion || null,
       notas: parsed.data.notas || null,
     })
     .eq("id", id)
@@ -77,47 +99,86 @@ export async function actualizarCliente(
 
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, error: "Ya existe otro cliente con ese teléfono." };
+      return {
+        ok: false,
+        error: "Ya existe otro cliente con ese teléfono.",
+      };
     }
-    return { ok: false, error: "No se pudo actualizar el cliente." };
+
+    return {
+      ok: false,
+      error: "No se pudo actualizar el cliente.",
+    };
   }
 
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${id}`);
+
   return { ok: true, data };
 }
 
 export async function eliminarCliente(id: string): Promise<ActionResult> {
   const perfil = await checkAdmin();
+
   if (!perfil) {
-    return { ok: false, error: "Solo un administrador puede eliminar clientes." };
+    return {
+      ok: false,
+      error: "Solo un administrador puede eliminar clientes.",
+    };
   }
 
   const supabase = await createClient();
+
   const { error } = await supabase
     .from("clients")
     .update({ activo: false })
     .eq("id", id);
 
-  if (error) return { ok: false, error: "No se pudo eliminar el cliente." };
+  if (error) {
+    return {
+      ok: false,
+      error: "No se pudo eliminar el cliente.",
+    };
+  }
 
   revalidatePath("/clientes");
+
   return { ok: true, data: undefined };
 }
 
-export async function buscarClientes(query: string): Promise<ActionResult<Client[]>> {
+export async function buscarClientes(
+  query: string
+): Promise<ActionResult<Client[]>> {
   const perfil = await checkAuth();
-  if (!perfil) return { ok: false, error: "No autorizado." };
-  if (!query || query.trim().length < 2) return { ok: true, data: [] };
+
+  if (!perfil) {
+    return { ok: false, error: "No autorizado." };
+  }
+
+  if (!query || query.trim().length < 2) {
+    return { ok: true, data: [] };
+  }
 
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("clients")
     .select("*")
     .eq("activo", true)
-    .or(`nombre.ilike.%${query}%,apellido.ilike.%${query}%,telefono.ilike.%${query}%`)
+    .or(
+      `nombre.ilike.%${query}%,apellido.ilike.%${query}%,telefono.ilike.%${query}%,direccion.ilike.%${query}%`
+    )
     .limit(10);
 
-  if (error) return { ok: false, error: "No se pudo buscar." };
-  return { ok: true, data: data ?? [] };
+  if (error) {
+    return {
+      ok: false,
+      error: "No se pudo buscar.",
+    };
+  }
+
+  return {
+    ok: true,
+    data: data ?? [],
+  };
 }
