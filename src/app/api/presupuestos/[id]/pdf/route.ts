@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
-import { generarPdfComprobante } from "@/lib/pdf/comprobante";
+import { generarPdfPresupuesto } from "@/lib/pdf/presupuesto";
 
 export const runtime = "nodejs";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ workId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { workId } = await params;
+  const { id } = await params;
 
   const perfil = await checkAuth();
 
@@ -19,7 +19,7 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const pdf = await generarPdfComprobante(supabase, workId);
+  const pdf = await generarPdfPresupuesto(supabase, id);
 
   if (!pdf.ok) {
     return NextResponse.json({ error: pdf.error }, { status: pdf.status });
