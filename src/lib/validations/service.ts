@@ -15,7 +15,7 @@ export const servicioSchema = z.object({
     .min(1, "Mínimo 1")
     .optional()
     .nullable(),
-  tiene_ficha_tecnica: z.boolean().default(false),
+  tiene_ficha_tecnica: z.boolean(),
 });
 
 export type ServicioFormValues = z.infer<typeof servicioSchema>;

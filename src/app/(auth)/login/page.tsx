@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Scissors } from "lucide-react";
 import { login } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +27,12 @@ export default function LoginPage() {
       return;
     }
 
-    const redirectTo = searchParams.get("redirect") || "/dashboard";
+    // Solo se aceptan rutas internas del sitio (empiezan con una sola "/")
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+    const redirectTo =
+      redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+        ? redirect
+        : "/dashboard";
     router.push(redirectTo);
     router.refresh();
   }
