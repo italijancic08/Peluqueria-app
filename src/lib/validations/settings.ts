@@ -12,14 +12,18 @@ export const businessSettingsSchema = z.object({
 
 export type BusinessSettingsValues = z.infer<typeof businessSettingsSchema>;
 
+const horaSchema = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Hora inválida");
+
 export const businessHoursSchema = z.object({
   horarios: z.array(
     z.object({
       id: z.string().uuid(),
       dia_semana: z.number().int().min(0).max(6),
       activo: z.boolean(),
-      hora_apertura: z.string(),
-      hora_cierre: z.string(),
+      hora_apertura: horaSchema,
+      hora_cierre: horaSchema,
+      hora_apertura_2: horaSchema.nullable(),
+      hora_cierre_2: horaSchema.nullable(),
     })
   ),
 });

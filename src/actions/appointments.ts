@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuth } from "@/lib/auth/guards";
 import { calcularSlotsDelDia } from "@/lib/calculations/availability";
+import { franjasDelHorario } from "@/lib/horarios";
 import { normalizarTelefono } from "@/lib/format";
 import { reservaPublicaSchema, turnoInternoSchema } from "@/lib/validations/appointment";
 import { motivoSchema } from "@/lib/validations/reprogramacion";
@@ -48,8 +49,7 @@ export async function obtenerDisponibilidad(
   const slots = calcularSlotsDelDia({
     fechaISO,
     duracionMin,
-    horaApertura: horario.hora_apertura,
-    horaCierre: horario.hora_cierre,
+    franjas: franjasDelHorario(horario),
     intervaloMin: settings.intervalo_turnos_min,
     capacidad: settings.capacidad_simultanea,
     servicios: servicios.map((s) => ({ id: s.id, cupoMaximo: s.cupo_maximo })),

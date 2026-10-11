@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calcularSlotsDelDia } from "@/lib/calculations/availability";
+import { franjasDelHorario } from "@/lib/horarios";
 import { mostrarFecha } from "@/lib/dates";
 import type { Database } from "@/types/database";
 import type { ActionResult } from "@/types/models";
@@ -54,8 +55,7 @@ export async function slotsDisponibles(
   const slots = calcularSlotsDelDia({
     fechaISO,
     duracionMin,
-    horaApertura: horario.hora_apertura,
-    horaCierre: horario.hora_cierre,
+    franjas: franjasDelHorario(horario),
     intervaloMin: settings.intervalo_turnos_min,
     capacidad: settings.capacidad_simultanea,
     servicios: (servicios ?? []).map((s) => ({ id: s.id, cupoMaximo: s.cupo_maximo })),

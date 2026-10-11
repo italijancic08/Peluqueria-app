@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { checkAdmin } from "@/lib/auth/guards";
 import { businessSettingsSchema, businessHoursSchema } from "@/lib/validations/settings";
+import { DIAS_SEMANA } from "@/constants/labels";
 import type { ActionResult } from "@/types/models";
 
 export async function actualizarConfiguracion(valores: unknown): Promise<ActionResult> {
@@ -49,10 +50,28 @@ export async function actualizarHorarios(valores: unknown): Promise<ActionResult
   }
 
   for (const h of parsed.data.horarios) {
-    if (h.activo && h.hora_cierre <= h.hora_apertura) {
+    const dia = DIAS_SEMANA[h.dia_semana];
+
+    if (h.hora_cierre <= h.hora_apertura) {
+      return { ok: false, error: `${dia}: la mañana tiene que cerrar después de abrir.` };
+    }
+
+    // La tarde es opcional: o se cargan los dos horarios o ninguno
+    if (h.hora_apertura_2 === null && h.hora_cierre_2 === null) continue;
+
+    if (h.hora_apertura_2 === null || h.hora_cierre_2 === null) {
       return {
         ok: false,
-        error: "El horario de cierre tiene que ser posterior al de apertura en todos los días activos.",
+        error: `${dia}: completá apertura y cierre de la tarde, o dejá los dos vacíos.`,
+      };
+    }
+    if (h.hora_cierre_2 <= h.hora_apertura_2) {
+      return { ok: false, error: `${dia}: la tarde tiene que cerrar después de abrir.` };
+    }
+    if (h.hora_apertura_2 <= h.hora_cierre) {
+      return {
+        ok: false,
+        error: `${dia}: la tarde tiene que abrir después del cierre de la mañana.`,
       };
     }
   }
@@ -66,6 +85,8 @@ export async function actualizarHorarios(valores: unknown): Promise<ActionResult
         activo: h.activo,
         hora_apertura: h.hora_apertura,
         hora_cierre: h.hora_cierre,
+        hora_apertura_2: h.hora_apertura_2,
+        hora_cierre_2: h.hora_cierre_2,
       })
       .eq("id", h.id);
 

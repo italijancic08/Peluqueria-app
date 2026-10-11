@@ -400,6 +400,8 @@ export type Database = {
           dia_semana: number
           hora_apertura: string
           hora_cierre: string
+          hora_apertura_2: string | null
+          hora_cierre_2: string | null
           id: string
           updated_at: string
         }
@@ -409,6 +411,8 @@ export type Database = {
           dia_semana: number
           hora_apertura: string
           hora_cierre: string
+          hora_apertura_2?: string | null
+          hora_cierre_2?: string | null
           id?: string
           updated_at?: string
         }
@@ -418,6 +422,8 @@ export type Database = {
           dia_semana?: number
           hora_apertura?: string
           hora_cierre?: string
+          hora_apertura_2?: string | null
+          hora_cierre_2?: string | null
           id?: string
           updated_at?: string
         }
