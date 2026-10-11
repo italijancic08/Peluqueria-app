@@ -6,9 +6,9 @@ import { CodigoTurno } from "@/components/turnos/codigo-turno";
 export default async function ConfirmacionTurnoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ numero?: string; token?: string; codigo?: string }>;
+  searchParams: Promise<{ numero?: string; token?: string; codigo?: string; sinEmail?: string }>;
 }) {
-  const { numero, token, codigo } = await searchParams;
+  const { numero, token, codigo, sinEmail } = await searchParams;
   const tokenValido = token && /^[a-f0-9]{64}$/.test(token) ? token : null;
   const codigoValido = codigo && /^[A-HJ-NP-Z2-9]{6}$/.test(codigo) ? codigo : null;
 
@@ -31,6 +31,13 @@ export default async function ConfirmacionTurnoPage({
         <p className="text-sm text-[#9C8577]">Te esperamos en el horario elegido.</p>
 
         {codigoValido && <CodigoTurno codigo={codigoValido} />}
+
+        {sinEmail === "1" && (
+          <p className="rounded-xl border border-[#EDD9C4] bg-[#FBF3EA] p-3 text-sm text-[#4A3428]">
+            Como no cargaste un email, no vas a recibir avisos por mail. Guardá tu código o sacale
+            una captura a esta pantalla para poder gestionar tu turno.
+          </p>
+        )}
 
         {tokenValido && (
           <div className="space-y-2 rounded-xl border border-[#EDD9C4] bg-[#FBF3EA] p-4">

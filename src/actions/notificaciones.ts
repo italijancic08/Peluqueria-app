@@ -28,3 +28,25 @@ export async function descartarCancelacion(turnoId: string): Promise<ActionResul
   revalidatePath("/dashboard");
   return { ok: true, data: undefined };
 }
+
+/** Marca como visto el aviso de un mail que no se pudo enviar: deja de aparecer en el dashboard. */
+export async function descartarEmailFallido(logId: string): Promise<ActionResult> {
+  const perfil = await checkAuth();
+  if (!perfil) return { ok: false, error: "No autorizado." };
+
+  const id = idSchema.safeParse(logId);
+  if (!id.success) return { ok: false, error: "Identificador inválido." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("email_logs")
+    .update({ visto_at: new Date().toISOString() })
+    .eq("id", id.data)
+    .eq("estado", "FALLIDO")
+    .is("visto_at", null);
+
+  if (error) return { ok: false, error: "No se pudo descartar la notificación." };
+
+  revalidatePath("/dashboard");
+  return { ok: true, data: undefined };
+}

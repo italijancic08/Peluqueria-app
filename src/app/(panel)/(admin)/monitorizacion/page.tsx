@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CircleAlert, Mail, MailCheck, MailX } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { ReenviarEmailButton } from "@/components/monitorizacion/reenviar-email-button";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { RUTAS } from "@/constants/routes";
@@ -161,6 +162,7 @@ export default async function MonitorizacionPage({
               <Th>Email</Th>
               <Th>Estado</Th>
               <Th>Motivo</Th>
+              <Th>Acción</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -202,6 +204,17 @@ export default async function MonitorizacionPage({
                         <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         {r.motivo}
                       </span>
+                    ) : (
+                      <span className="text-[#9C8577]">—</span>
+                    )}
+                  </Td>
+                  <Td className="whitespace-nowrap">
+                    {fallido && r.reenviado_at ? (
+                      <span className="text-xs text-[#5C6640]">
+                        Reenviado el {mostrarFechaHora(r.reenviado_at)}
+                      </span>
+                    ) : fallido && (r.work_id || r.budget_id || r.appointment_id) ? (
+                      <ReenviarEmailButton id={r.id} />
                     ) : (
                       <span className="text-[#9C8577]">—</span>
                     )}

@@ -9,6 +9,7 @@ import { enviarEmail, registrarEmailLog } from "./enviar";
 import type { TipoEmail } from "./tipos";
 import {
   plantillaComprobante,
+  plantillaTurnoConfirmado,
   plantillaPresupuesto,
   plantillaReprogramacionConfirmada,
   plantillaReprogramacionPropuesta,
@@ -30,9 +31,19 @@ function nombreCompleto(c: Cliente): string {
   return c ? `${c.nombre} ${c.apellido}`.trim() : "";
 }
 
+/**
+ * Dirección base del sitio (solo protocolo + dominio). Se queda con el "origin"
+ * para que, aunque la variable de entorno tenga una ruta de más (por ejemplo
+ * "https://sitio.com/turnos"), los enlaces no salgan como /turnos/turnos/...
+ */
 function baseUrl(): string | null {
-  const url = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL;
-  return url ? url.replace(/\/+$/, "") : null;
+  const crudo = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.URL)?.trim();
+  if (!crudo) return null;
+  try {
+    return new URL(/^https?:\/\//i.test(crudo) ? crudo : `https://${crudo}`).origin;
+  } catch {
+    return null;
+  }
 }
 
 async function nombreNegocio(admin: Admin): Promise<string> {
@@ -192,7 +203,7 @@ async function cargarTurno(admin: Admin, turnoId: string) {
   const { data: turno } = await admin
     .from("appointments")
     .select(
-      `id, numero, fecha_hora_inicio, token_gestion,
+      `id, numero, codigo, fecha_hora_inicio, token_gestion,
        clients ( id, nombre, apellido, email ),
        appointment_services ( services ( nombre ) )`
     )
@@ -205,6 +216,7 @@ async function cargarTurno(admin: Admin, turnoId: string) {
   return {
     id: turno.id,
     numero: turno.numero,
+    codigo: turno.codigo,
     inicio: turno.fecha_hora_inicio,
     cliente: uno(turno.clients) as Cliente,
     servicios: (turno.appointment_services ?? [])
@@ -218,6 +230,8 @@ async function cargarTurno(admin: Admin, turnoId: string) {
 type Evento = {
   tipo: TipoEmail;
   turnoId: string;
+  /** Si el cliente no tiene email, no se intenta enviar ni se deja registro de falla. */
+  omitirSinEmail?: boolean;
   armar: (
     turno: Awaited<ReturnType<typeof cargarTurno>>,
     nombreNegocio: string
@@ -230,6 +244,7 @@ async function enviarEventoDeTurno(e: Evento): Promise<void> {
     async () => {
       const admin = createAdminClient();
       const turno = await cargarTurno(admin, e.turnoId);
+      if (e.omitirSinEmail && !turno.cliente?.email?.trim()) return;
       const plantilla = e.armar(turno, await nombreNegocio(admin));
 
       await enviarEmail({
@@ -251,11 +266,22 @@ function datosTurno(t: Awaited<ReturnType<typeof cargarTurno>>, negocio: string)
     nombreNegocio: negocio,
     nombreCliente: t.cliente?.nombre ?? "",
     numero: t.numero,
+    codigo: t.codigo,
     inicio: t.inicio,
     servicios: t.servicios,
     urlGestion: t.urlGestion,
     urlReserva: t.urlReserva,
   };
+}
+
+/** Se genera un turno (lo reserve el cliente o lo cargue el staff): confirmación con el código. */
+export function enviarEmailTurnoConfirmado(turnoId: string) {
+  return enviarEventoDeTurno({
+    tipo: "TURNO_CONFIRMADO",
+    turnoId,
+    omitirSinEmail: true,
+    armar: (t, negocio) => plantillaTurnoConfirmado(datosTurno(t, negocio)),
+  });
 }
 
 export function enviarEmailTurnoCancelado(
@@ -307,7 +333,7 @@ export function enviarEmailReprogramacionSolicitada(
 /** Se aceptó la reprogramación (el turno ya está en el horario nuevo). */
 export function enviarEmailReprogramacionConfirmada(
   turnoId: string,
-  p: { inicioAnterior: string }
+  p: { inicioAnterior: string; aceptadoPedidoDelCliente: boolean }
 ) {
   return enviarEventoDeTurno({
     tipo: "REPROGRAMACION_CONFIRMADA",

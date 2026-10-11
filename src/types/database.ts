@@ -746,8 +746,10 @@ export type Database = {
           id: string
           motivo: string | null
           referencia: string | null
+          reenviado_at: string | null
           resend_id: string | null
           tipo: string
+          visto_at: string | null
           work_id: string | null
         }
         Insert: {
@@ -762,8 +764,10 @@ export type Database = {
           id?: string
           motivo?: string | null
           referencia?: string | null
+          reenviado_at?: string | null
           resend_id?: string | null
           tipo: string
+          visto_at?: string | null
           work_id?: string | null
         }
         Update: {
@@ -778,8 +782,10 @@ export type Database = {
           id?: string
           motivo?: string | null
           referencia?: string | null
+          reenviado_at?: string | null
           resend_id?: string | null
           tipo?: string
+          visto_at?: string | null
           work_id?: string | null
         }
         Relationships: []

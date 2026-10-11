@@ -29,6 +29,7 @@ import {
   cargarCancelacionesCliente,
   cargarReprogramacionesPendientes,
 } from "@/lib/notificaciones-turnos";
+import { cargarEmailsFallidos } from "@/lib/notificaciones-email";
 import { formatearPesos } from "@/lib/format";
 
 export default async function DashboardPage() {
@@ -36,9 +37,10 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   await supabase.rpc("expirar_turnos_vencidos");
   const sinTomar = await contarTurnosSinTomar(supabase);
-  const [cancelaciones, reprogramaciones] = await Promise.all([
+  const [cancelaciones, reprogramaciones, emailsFallidos] = await Promise.all([
     cargarCancelacionesCliente(supabase),
     cargarReprogramacionesPendientes(supabase),
+    cargarEmailsFallidos(supabase),
   ]);
 
   const hoyInicio = new Date();
@@ -114,7 +116,11 @@ export default async function DashboardPage() {
 
         <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
 
-        <NotificacionesTurnos cancelaciones={cancelaciones} reprogramaciones={reprogramaciones} />
+        <NotificacionesTurnos
+          cancelaciones={cancelaciones}
+          reprogramaciones={reprogramaciones}
+          emailsFallidos={emailsFallidos}
+        />
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 space-y-4 sm:border-r sm:border-dashed sm:border-[#D9C4A8] sm:pr-4">
@@ -228,7 +234,11 @@ export default async function DashboardPage() {
 
       <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
 
-      <NotificacionesTurnos cancelaciones={cancelaciones} reprogramaciones={reprogramaciones} />
+      <NotificacionesTurnos
+        cancelaciones={cancelaciones}
+        reprogramaciones={reprogramaciones}
+        emailsFallidos={emailsFallidos}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/agenda">

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, TriangleAlert } from "lucide-react";
 import { crearTurnoPublico } from "@/actions/appointments";
 import { ServiciosGrid } from "./servicios-grid";
 import { PeluquerasShowcase } from "./peluqueras-showcase";
@@ -34,9 +34,20 @@ type Paso = 1 | 2 | 3;
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [avisoSinEmail, setAvisoSinEmail] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
 
-  async function confirmar(e: React.FormEvent) {
+  function confirmar(e: React.FormEvent) {
     e.preventDefault();
+    // Sin email dejamos reservar, pero primero avisamos qué se pierde.
+    if (!email.trim()) {
+      setAvisoSinEmail(true);
+      return;
+    }
+    void reservar();
+  }
+
+  async function reservar() {
     setError(null);
 
     if (!slot) {
@@ -56,8 +67,9 @@ type Paso = 1 | 2 | 3;
       return;
     }
 
+    const sinEmail = email.trim() ? "" : "&sinEmail=1";
     router.push(
-      `/turnos/confirmacion?numero=${resultado.data.numero}&token=${resultado.data.token}&codigo=${resultado.data.codigo}`
+      `/turnos/confirmacion?numero=${resultado.data.numero}&token=${resultado.data.token}&codigo=${resultado.data.codigo}${sinEmail}`
     );
   }
 
@@ -117,12 +129,66 @@ type Paso = 1 | 2 | 3;
             <Input placeholder="Apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} required />
           </div>
           <Input placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
-          <Input placeholder="Email (opcional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="space-y-1.5">
+            <Input
+              ref={emailRef}
+              placeholder="Email (opcional)"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setAvisoSinEmail(false);
+              }}
+            />
+            {!email.trim() && (
+              <p className="text-xs text-[#9C8577]">
+                Recomendamos cargarlo: es por donde te enviamos la confirmación del turno con tu
+                código, los avisos de cambios o cancelaciones y tus comprobantes.
+              </p>
+            )}
+          </div>
           <Textarea placeholder="Comentario (opcional)" rows={2} value={comentario} onChange={(e) => setComentario(e.target.value)} />
 
-          <Button type="submit" className="w-full" disabled={enviando}>
-            {enviando ? "Reservando..." : "Confirmar turno"}
-          </Button>
+          {avisoSinEmail && !email.trim() ? (
+            <div className="space-y-3 rounded-xl border border-[#EDD9C4] bg-[#FBF3EA] p-4">
+              <div className="flex items-start gap-3">
+                <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#A8741F]" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-[#4A3428]">¿Querés seguir sin email?</p>
+                  <p className="text-sm text-[#4A3428]">
+                    Sin un email no te vamos a poder enviar la confirmación del turno, los avisos de
+                    cambios o cancelaciones, ni tus comprobantes y presupuestos. Vas a tener que
+                    guardar tu código de turno para poder gestionarlo.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={() => {
+                    setAvisoSinEmail(false);
+                    emailRef.current?.focus();
+                  }}
+                >
+                  Agregar mi email
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  disabled={enviando}
+                  onClick={() => void reservar()}
+                >
+                  {enviando ? "Reservando..." : "Continuar sin email"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button type="submit" className="w-full" disabled={enviando}>
+              {enviando ? "Reservando..." : "Confirmar turno"}
+            </Button>
+          )}
         </form>
       )}
     </div>

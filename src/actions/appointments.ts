@@ -10,6 +10,7 @@ import { normalizarTelefono } from "@/lib/format";
 import { reservaPublicaSchema, turnoInternoSchema } from "@/lib/validations/appointment";
 import { motivoSchema } from "@/lib/validations/reprogramacion";
 import { cancelarTurnoComun } from "@/lib/turnos/operaciones";
+import { enviarEmailTurnoConfirmado } from "@/lib/email/notificar";
 import type { ActionResult } from "@/types/models";
 
 export async function obtenerDisponibilidad(
@@ -144,11 +145,16 @@ export async function crearTurnoPublico(
   const telefonoNorm = normalizarTelefono(telefono);
   const { data: clienteExistente } = await admin
     .from("clients")
-    .select("id")
+    .select("id, email")
     .eq("telefono_norm", telefonoNorm)
     .maybeSingle();
 
   let clientId = clienteExistente?.id as string | undefined;
+
+  // Cliente que ya existía sin email y ahora lo informa: lo guardamos para poder avisarle por mail.
+  if (clienteExistente && email && !clienteExistente.email) {
+    await admin.from("clients").update({ email }).eq("id", clienteExistente.id);
+  }
 
   if (!clientId) {
     const { data: nuevoCliente, error: errorCliente } = await admin
@@ -230,6 +236,9 @@ export async function crearTurnoPublico(
   if (errorWorkItems) {
     return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo. Contactanos." };
   }
+
+  // Mail al cliente confirmando el turno, con el código y el enlace de gestión.
+  await enviarEmailTurnoConfirmado(turno.id);
 
   return {
     ok: true,
@@ -334,6 +343,9 @@ export async function crearTurnoInterno(
   if (errorWorkItems) {
     return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo." };
   }
+
+  // Mail al cliente confirmando el turno (solo sale si tiene email cargado).
+  await enviarEmailTurnoConfirmado(turno.id);
 
   revalidatePath("/agenda");
   revalidatePath("/trabajos");

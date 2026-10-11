@@ -331,6 +331,8 @@ export async function responderSolicitud(
   if (p.aceptar) {
     await enviarEmailReprogramacionConfirmada(turno.id, {
       inicioAnterior: turno.fecha_hora_inicio,
+      // Si el que acepta es el staff, lo que se aceptó fue un pedido del cliente.
+      aceptadoPedidoDelCliente: p.actor.tipo === "STAFF",
     });
   } else if (p.actor.tipo === "STAFF") {
     await enviarEmailReprogramacionRechazada(turno.id, {

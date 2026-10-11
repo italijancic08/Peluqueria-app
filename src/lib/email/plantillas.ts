@@ -1,5 +1,6 @@
 import { mostrarFecha } from "@/lib/dates";
 import { formatearPesos } from "@/lib/format";
+import { formatearCodigo } from "@/lib/validations/codigo-turno";
 import {
   DIRECCION_NEGOCIO,
   EMAIL_NEGOCIO,
@@ -25,6 +26,8 @@ type Layout = {
   intro: string;
   filas?: Fila[];
   bloque?: { titulo: string; texto: string };
+  /** Código del turno, destacado en grande (solo lo usa el mail de turno confirmado). */
+  codigoDestacado?: string;
   boton?: { texto: string; url: string };
   cierre?: string;
 };
@@ -48,6 +51,13 @@ function layout(p: Layout): string {
     ? `<div style="margin:16px 0;padding:12px 14px;background:#FBF3EA;border-radius:8px;border:1px solid #EDD9C4;">
          <p style="margin:0 0 4px;font-size:12px;color:#9C8577;">${escapar(p.bloque.titulo)}</p>
          <p style="margin:0;font-size:14px;color:#4A3428;">${escapar(p.bloque.texto)}</p>
+       </div>`
+    : "";
+
+  const codigo = p.codigoDestacado
+    ? `<div style="margin:20px 0;padding:16px;background:#FBF3EA;border-radius:8px;border:1px solid #EDD9C4;text-align:center;">
+         <p style="margin:0 0 6px;font-size:12px;color:#9C8577;">Tu código de turno</p>
+         <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:30px;font-weight:bold;letter-spacing:6px;color:#4A3428;">${escapar(formatearCodigo(p.codigoDestacado))}</p>
        </div>`
     : "";
 
@@ -79,6 +89,7 @@ function layout(p: Layout): string {
             <p style="margin:0;font-size:14px;color:#4A3428;line-height:1.55;">${escapar(p.intro)}</p>
             ${tabla}
             ${bloque}
+            ${codigo}
             ${boton}
             ${cierre}
           </td>
@@ -159,11 +170,36 @@ export function plantillaPresupuesto(
 
 type DatosTurno = Base & {
   numero: number;
+  codigo: string;
   inicio: string;
   servicios: string[];
   urlGestion: string | null;
   urlReserva: string | null;
 };
+
+export function plantillaTurnoConfirmado(d: DatosTurno): Plantilla {
+  return {
+    asunto: `Turno N° ${d.numero} confirmado - ${d.nombreNegocio}`,
+    html: layout({
+      ...d,
+      titulo: "¡Tu turno está reservado!",
+      saludo: saludo(d.nombreCliente),
+      intro:
+        "Te confirmamos que tu turno quedó registrado. Guardá este mail: con el código de abajo podés cancelar o cambiar el horario cuando lo necesites.",
+      filas: [
+        { etiqueta: "Turno", valor: `N° ${d.numero}` },
+        { etiqueta: "Fecha y hora", valor: fechaLarga(d.inicio) },
+        ...(d.servicios.length
+          ? [{ etiqueta: "Servicios", valor: d.servicios.join(", ") }]
+          : []),
+      ],
+      codigoDestacado: d.codigo,
+      boton: d.urlGestion ? { texto: "Gestionar mi turno", url: d.urlGestion } : undefined,
+      cierre:
+        "También podés ingresar tu código en “Gestionar turno” desde nuestra página. ¡Te esperamos!",
+    }),
+  };
+}
 
 export function plantillaTurnoCancelado(
   d: DatosTurno & { canceladoPor: "CLIENTE" | "STAFF"; motivo: string | null }
@@ -242,7 +278,7 @@ export function plantillaReprogramacionSolicitada(
 }
 
 export function plantillaReprogramacionConfirmada(
-  d: DatosTurno & { inicioAnterior: string }
+  d: DatosTurno & { inicioAnterior: string; aceptadoPedidoDelCliente: boolean }
 ): Plantilla {
   return {
     asunto: `Tu turno N° ${d.numero} fue reprogramado - ${d.nombreNegocio}`,
@@ -250,7 +286,9 @@ export function plantillaReprogramacionConfirmada(
       ...d,
       titulo: "Turno reprogramado",
       saludo: saludo(d.nombreCliente),
-      intro: "Tu turno quedó confirmado en el nuevo horario.",
+      intro: d.aceptadoPedidoDelCliente
+        ? "Aceptamos tu pedido de cambio de horario. Tu turno quedó confirmado en el nuevo horario."
+        : "Tu turno quedó confirmado en el nuevo horario.",
       filas: [
         { etiqueta: "Turno", valor: `N° ${d.numero}` },
         { etiqueta: "Antes", valor: fechaLarga(d.inicioAnterior) },
