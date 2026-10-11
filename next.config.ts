@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   // Los PDF leen public/logo.png con fs: se asegura que viaje con las funciones
   outputFileTracingIncludes: {
     "/api/**/*": ["./public/logo.png"],
+    "/**/*": ["./public/logo.png"],
   },
 };
 

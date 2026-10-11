@@ -1,6 +1,13 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { encolarNotificacion } from "@/lib/notificaciones";
+import {
+  enviarEmailReprogramacionConfirmada,
+  enviarEmailReprogramacionPropuesta,
+  enviarEmailReprogramacionRechazada,
+  enviarEmailReprogramacionSolicitada,
+  enviarEmailTurnoCancelado,
+} from "@/lib/email/notificar";
 import { horarioDisponible } from "./slots";
 import { turnoModificable, uno } from "./gestion";
 import type { Database } from "@/types/database";
@@ -74,6 +81,12 @@ export async function cancelarTurnoComun(
       fecha_hora_inicio: turno.fecha_hora_inicio,
       motivo: limpiar(motivo),
     },
+  });
+
+  // Mail al cliente avisando la cancelación (cancele él o el staff).
+  await enviarEmailTurnoCancelado(turno.id, {
+    canceladoPor: actor.tipo === "CLIENTE" ? "CLIENTE" : "STAFF",
+    motivo: limpiar(motivo),
   });
 
   return { ok: true, data: undefined };
@@ -159,6 +172,19 @@ export async function crearSolicitud(
       motivo: limpiar(p.motivo),
     },
   });
+
+  // Mail al cliente: propuesta del staff, o acuse de recibo si el pedido fue suyo.
+  if (p.actor.tipo === "STAFF") {
+    await enviarEmailReprogramacionPropuesta(turno.id, {
+      inicioPropuesto: inicio.toISOString(),
+      motivo: limpiar(p.motivo),
+    });
+  } else {
+    await enviarEmailReprogramacionSolicitada(turno.id, {
+      inicioPropuesto: inicio.toISOString(),
+      motivo: limpiar(p.motivo),
+    });
+  }
 
   return { ok: true, data: { id: solicitud.id } };
 }
@@ -300,6 +326,18 @@ export async function responderSolicitud(
       motivo: limpiar(p.motivo),
     },
   });
+
+  // Mail al cliente: turno reprogramado, o aviso de que el staff rechazó su pedido.
+  if (p.aceptar) {
+    await enviarEmailReprogramacionConfirmada(turno.id, {
+      inicioAnterior: turno.fecha_hora_inicio,
+    });
+  } else if (p.actor.tipo === "STAFF") {
+    await enviarEmailReprogramacionRechazada(turno.id, {
+      inicioPedido: sol.fecha_hora_inicio_propuesta,
+      motivo: limpiar(p.motivo),
+    });
+  }
 
   return { ok: true, data: undefined };
 }

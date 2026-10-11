@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
 import { presupuestoSchema } from "@/lib/validations/budget";
+import { enviarPresupuestoPorEmail } from "@/lib/email/notificar";
 import type { ActionResult, BudgetStatus } from "@/types/models";
 
 export async function crearPresupuesto(
@@ -56,6 +57,9 @@ export async function crearPresupuesto(
   if (errorItems) {
     return { ok: false, error: "El presupuesto se creó pero hubo un problema con los ítems." };
   }
+
+  // Presupuesto listo: se envía por mail al cliente (no frena la creación si falla).
+  await enviarPresupuestoPorEmail(presupuesto.id);
 
   revalidatePath("/presupuestos");
   revalidatePath("/documentos");

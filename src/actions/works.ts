@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
 import { consumoSchema, pagoSchema } from "@/lib/validations/work";
+import { enviarComprobantePorEmail } from "@/lib/email/notificar";
 import type { ActionResult } from "@/types/models";
 
 export async function tomarTrabajo(id: string): Promise<ActionResult> {
@@ -171,6 +172,11 @@ export async function cobrarTrabajo(
   if (error) return { ok: false, error: error.message || "No se pudo registrar el cobro." };
 
   const resultado = Array.isArray(data) ? data[0] : data;
+
+  // Cuando el trabajo queda totalmente cobrado, se genera el comprobante y se envía por mail.
+  if (resultado?.cobrado) {
+    await enviarComprobantePorEmail(id);
+  }
 
   revalidatePath("/trabajos");
   revalidatePath(`/trabajos/${id}`);

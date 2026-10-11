@@ -733,6 +733,57 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          appointment_id: string | null
+          budget_id: string | null
+          client_id: string | null
+          cliente_nombre: string | null
+          created_at: string
+          asunto: string | null
+          email_destino: string | null
+          estado: string
+          id: string
+          motivo: string | null
+          referencia: string | null
+          resend_id: string | null
+          tipo: string
+          work_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          budget_id?: string | null
+          client_id?: string | null
+          cliente_nombre?: string | null
+          created_at?: string
+          asunto?: string | null
+          email_destino?: string | null
+          estado: string
+          id?: string
+          motivo?: string | null
+          referencia?: string | null
+          resend_id?: string | null
+          tipo: string
+          work_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          budget_id?: string | null
+          client_id?: string | null
+          cliente_nombre?: string | null
+          created_at?: string
+          asunto?: string | null
+          email_destino?: string | null
+          estado?: string
+          id?: string
+          motivo?: string | null
+          referencia?: string | null
+          resend_id?: string | null
+          tipo?: string
+          work_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           appointment_id: string | null

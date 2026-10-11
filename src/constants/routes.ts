@@ -23,4 +23,5 @@ export const RUTAS = {
   servicios: "/servicios",
   estadisticas: "/estadisticas",
   configuracion: "/configuracion",
+  monitorizacion: "/monitorizacion",
 } as const;

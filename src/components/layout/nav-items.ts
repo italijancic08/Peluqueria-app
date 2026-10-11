@@ -13,6 +13,7 @@ import {
   Settings2,
   CircleUser,
   Landmark,
+  MailCheck,
   type LucideIcon,
 } from "lucide-react";
 import { RUTAS } from "@/constants/routes";
@@ -39,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Servicios", href: RUTAS.servicios, icon: Sparkles, soloAdmin: true },
   { label: "Estadísticas", href: RUTAS.estadisticas, icon: ChartBar, soloAdmin: true },
   { label: "Configuración", href: RUTAS.configuracion, icon: Settings2, soloAdmin: true },
+  { label: "Monitorización", href: RUTAS.monitorizacion, icon: MailCheck, soloAdmin: true },
   { label: "Mi perfil", href: RUTAS.perfil, icon: CircleUser },
 ];
 
