@@ -15,6 +15,7 @@ import {
 } from "@/components/turnos/solicitudes-pendientes";
 import { mostrarHora } from "@/lib/dates";
 import { estadoTurnoVista } from "@/lib/estado-turno";
+import { formatearCodigo } from "@/lib/validations/codigo-turno";
 
 export default async function TurnosPage({
   searchParams,
@@ -98,6 +99,7 @@ export default async function TurnosPage({
             <Tr>
               <Th>Hora</Th>
               <Th>Cliente</Th>
+              <Th>Código</Th>
               <Th>Atiende</Th>
               <Th>Estado</Th>
               <Th></Th>
@@ -127,6 +129,7 @@ export default async function TurnosPage({
                   <Td>
                     {t.clients?.apellido}, {t.clients?.nombre}
                   </Td>
+                  <Td className="font-mono text-xs tracking-wider">{formatearCodigo(t.codigo)}</Td>
                   <Td>{atiende}</Td>
                   <Td>
                     <div className="flex flex-col items-start gap-1">

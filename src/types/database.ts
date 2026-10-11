@@ -212,10 +212,12 @@ export type Database = {
       appointments: {
         Row: {
           cancelado_at: string | null
+          cancelacion_vista_at: string | null
           cancelado_por: string | null
           cancelado_por_profile_id: string | null
           motivo_cancelacion: string | null
           token_gestion: string
+          codigo: string
           budget_id: string | null
           client_id: string
           comentario_cliente: string | null
@@ -232,10 +234,12 @@ export type Database = {
         }
         Insert: {
           cancelado_at?: string | null
+          cancelacion_vista_at?: string | null
           cancelado_por?: string | null
           cancelado_por_profile_id?: string | null
           motivo_cancelacion?: string | null
           token_gestion?: string
+          codigo?: string
           budget_id?: string | null
           client_id: string
           comentario_cliente?: string | null
@@ -252,6 +256,7 @@ export type Database = {
         }
         Update: {
           cancelado_at?: string | null
+          cancelacion_vista_at?: string | null
           cancelado_por?: string | null
           cancelado_por_profile_id?: string | null
           motivo_cancelacion?: string | null

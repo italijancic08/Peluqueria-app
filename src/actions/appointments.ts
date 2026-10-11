@@ -128,7 +128,7 @@ async function verificarHorarioDisponible(
 
 export async function crearTurnoPublico(
   valores: unknown
-): Promise<ActionResult<{ numero: number; token: string }>> {
+): Promise<ActionResult<{ numero: number; token: string; codigo: string }>> {
   const parsed = reservaPublicaSchema.safeParse(valores);
   if (!parsed.success) {
     return {
@@ -192,7 +192,7 @@ export async function crearTurnoPublico(
       origen: "PUBLICO",
       estado: "CONFIRMADO",
     })
-    .select("id, numero, token_gestion")
+    .select("id, numero, token_gestion, codigo")
     .single();
 
   if (errorTurno || !turno) {
@@ -231,12 +231,15 @@ export async function crearTurnoPublico(
     return { ok: false, error: "El turno se creó pero hubo un problema al generar el trabajo. Contactanos." };
   }
 
-  return { ok: true, data: { numero: turno.numero, token: turno.token_gestion } };
+  return {
+    ok: true,
+    data: { numero: turno.numero, token: turno.token_gestion, codigo: turno.codigo },
+  };
 }
 
 export async function crearTurnoInterno(
   valores: unknown
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; numero: number; codigo: string }>> {
   const perfil = await checkAuth();
   if (!perfil) return { ok: false, error: "No autorizado." };
 
@@ -282,7 +285,7 @@ export async function crearTurnoInterno(
       estado: "CONFIRMADO",
       budget_id: budgetId || null,
     })
-    .select("id")
+    .select("id, numero, codigo")
     .single();
 
   if (errorTurno || !turno) {
@@ -335,7 +338,7 @@ export async function crearTurnoInterno(
   revalidatePath("/agenda");
   revalidatePath("/trabajos");
   revalidatePath("/trabajos/disponibles");
-  return { ok: true, data: { id: turno.id } };
+  return { ok: true, data: { id: turno.id, numero: turno.numero, codigo: turno.codigo } };
 }
 
 export async function cancelarTurno(id: string, motivo?: string): Promise<ActionResult> {

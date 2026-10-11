@@ -24,6 +24,11 @@ import { requireAuth } from "@/lib/auth/guards";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { AlertaTurnosSinTomar } from "@/components/dashboard/alerta-turnos-sin-tomar";
 import { contarTurnosSinTomar } from "@/lib/turnos-sin-tomar";
+import { NotificacionesTurnos } from "@/components/dashboard/notificaciones-turnos";
+import {
+  cargarCancelacionesCliente,
+  cargarReprogramacionesPendientes,
+} from "@/lib/notificaciones-turnos";
 import { formatearPesos } from "@/lib/format";
 
 export default async function DashboardPage() {
@@ -31,6 +36,10 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   await supabase.rpc("expirar_turnos_vencidos");
   const sinTomar = await contarTurnosSinTomar(supabase);
+  const [cancelaciones, reprogramaciones] = await Promise.all([
+    cargarCancelacionesCliente(supabase),
+    cargarReprogramacionesPendientes(supabase),
+  ]);
 
   const hoyInicio = new Date();
   hoyInicio.setHours(0, 0, 0, 0);
@@ -104,6 +113,8 @@ export default async function DashboardPage() {
         </div>
 
         <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
+
+        <NotificacionesTurnos cancelaciones={cancelaciones} reprogramaciones={reprogramaciones} />
 
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 space-y-4 sm:border-r sm:border-dashed sm:border-[#D9C4A8] sm:pr-4">
@@ -216,6 +227,8 @@ export default async function DashboardPage() {
       </div>
 
       <AlertaTurnosSinTomar cantidad={sinTomar.cantidad} avisoMin={sinTomar.avisoMin} />
+
+      <NotificacionesTurnos cancelaciones={cancelaciones} reprogramaciones={reprogramaciones} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/agenda">

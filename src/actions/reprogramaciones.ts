@@ -24,6 +24,7 @@ import type { ActionResult } from "@/types/models";
 const ERROR_MOTIVO = "El motivo puede tener hasta 500 caracteres.";
 
 function refrescarStaff() {
+  revalidatePath("/dashboard");
   revalidatePath("/agenda");
   revalidatePath("/trabajos");
   revalidatePath("/trabajos/disponibles");

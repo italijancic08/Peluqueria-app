@@ -8,6 +8,8 @@ import { TurnoScheduler } from "./turno-scheduler";
 import { SelectorCliente } from "./selector-cliente";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { CodigoTurno } from "./codigo-turno";
 import type { Client, Service } from "@/types/models";
 
 type PresupuestoPrefill = {
@@ -40,6 +42,7 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [creado, setCreado] = useState<{ numero: number; codigo: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +73,10 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
       return;
     }
 
+    setCreado({ numero: resultado.data.numero, codigo: resultado.data.codigo });
+  }
+
+  function irALaAgenda() {
     router.push("/agenda");
     router.refresh();
   }
@@ -121,9 +128,26 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
         onChange={(e) => setComentario(e.target.value)}
       />
 
-      <Button type="submit" disabled={enviando}>
+      <Button type="submit" disabled={enviando || !!creado}>
         {enviando ? "Creando..." : "Crear turno"}
       </Button>
+
+      <Modal abierto={!!creado} onCerrar={irALaAgenda} titulo="Turno creado">
+        {creado && (
+          <div className="space-y-4">
+            <p className="text-sm text-[#4A3428]">
+              El turno #{creado.numero} quedó confirmado.
+            </p>
+            <CodigoTurno
+              codigo={creado.codigo}
+              descripcion="Pasale este código al cliente: con él puede cancelar o cambiar su turno desde “Gestionar turno”."
+            />
+            <Button type="button" className="w-full" onClick={irALaAgenda}>
+              Ir a la agenda
+            </Button>
+          </div>
+        )}
+      </Modal>
     </form>
   );
 }
