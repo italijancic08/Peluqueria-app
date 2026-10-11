@@ -9,8 +9,18 @@ const display = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Peluquería",
-  description: "Sistema de gestión",
+  metadataBase: new URL("https://estefaniamartyn.com"),
+  title: "Estefanía Martyn | Peluquería",
+  description: "Reservá tu turno online de forma rápida y sencilla",
+  openGraph: {
+    title: "Estefanía Martyn | Peluquería",
+    description: "Reservá tu turno online de forma rápida y sencilla",
+    url: "https://estefaniamartyn.com",
+    siteName: "Estefanía Martyn",
+    type: "website",
+    locale: "es_AR",
+    images: [{ url: "/logo.png", alt: "Estefanía Martyn Peluquería" }],
+  },
 };
 
 export const viewport: Viewport = {
