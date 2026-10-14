@@ -1,36 +1,62 @@
 import { Button } from "@/components/ui/button";
 import { formatearPesos } from "@/lib/format";
-import type { Service } from "@/types/models";
+import { precioTarjeta } from "@/lib/precios";
+import { resolverElegidos, type Variantes } from "@/lib/seleccion";
+import type { ServiceWithVariants } from "@/types/models";
 
 type Props = {
-  servicios: Service[];
+  servicios: ServiceWithVariants[];
   servicioIds: string[];
+  variantes: Variantes;
+  recargoPct: number;
   onContinuar: () => void;
 };
 
-export function ResumenSeleccion({ servicios, servicioIds, onContinuar }: Props) {
-  const elegidos = servicios.filter((s) => servicioIds.includes(s.id));
-  const total = elegidos.reduce((acc, s) => acc + Number(s.precio), 0);
+export function ResumenSeleccion({ servicios, servicioIds, variantes, recargoPct, onContinuar }: Props) {
+  const { items, faltantes } = resolverElegidos(servicios, servicioIds, variantes);
+  const totalEfectivo = items.reduce((acc, i) => acc + i.precio, 0);
+  const completo = servicioIds.length > 0 && faltantes.length === 0;
 
   return (
     <div className="rounded-xl border border-[#EDD9C4] bg-white p-4 space-y-3">
-      {elegidos.length === 0 ? (
+      {servicioIds.length === 0 ? (
         <p className="text-sm text-[#9C8577]">Elegí al menos un servicio para continuar.</p>
       ) : (
         <div className="space-y-1">
-          {elegidos.map((s) => (
-            <div key={s.id} className="flex items-center justify-between text-sm">
-              <span className="text-[#4A3428]">{s.nombre}</span>
-              <span className="text-[#9C8577]">{formatearPesos(s.precio)}</span>
+          {items.map((i) => (
+            <div key={i.servicio.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-[#4A3428]">{i.nombre}</span>
+              <span className="text-right text-xs text-[#9C8577]">
+                Efectivo/transf. {formatearPesos(i.precio)} · Tarjeta{" "}
+                {formatearPesos(precioTarjeta(i.precio, recargoPct))}
+              </span>
             </div>
           ))}
-          <div className="flex items-center justify-between text-sm font-semibold pt-2 border-t border-[#F3E5D6]">
-            <span className="text-[#4A3428]">Total</span>
-            <span className="text-[#4A3428]">{formatearPesos(total)}</span>
-          </div>
+
+          {faltantes.length > 0 && (
+            <p className="text-sm text-[#B1543A]">
+              Elegí una opción para: {faltantes.map((s) => s.nombre).join(", ")}.
+            </p>
+          )}
+
+          {items.length > 0 && (
+            <div className="space-y-1 border-t border-[#F3E5D6] pt-2 text-sm font-semibold text-[#4A3428]">
+              <div className="flex items-center justify-between">
+                <span>Total efectivo / transferencia</span>
+                <span>{formatearPesos(totalEfectivo)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total con tarjeta (+{recargoPct}%)</span>
+                <span>{formatearPesos(precioTarjeta(totalEfectivo, recargoPct))}</span>
+              </div>
+              <p className="pt-1 text-xs font-normal text-[#9C8577]">
+                El precio final depende de cómo abones: efectivo/transferencia o tarjeta.
+              </p>
+            </div>
+          )}
         </div>
       )}
-      <Button className="w-full" disabled={elegidos.length === 0} onClick={onContinuar}>
+      <Button className="w-full" disabled={!completo} onClick={onContinuar}>
         Continuar
       </Button>
     </div>

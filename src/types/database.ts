@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -179,18 +179,24 @@ export type Database = {
           duracion_snapshot: number
           precio_snapshot: number
           service_id: string
+          variant_id: string | null
+          variante_nombre: string | null
         }
         Insert: {
           appointment_id: string
           duracion_snapshot: number
           precio_snapshot: number
           service_id: string
+          variant_id?: string | null
+          variante_nombre?: string | null
         }
         Update: {
           appointment_id?: string
           duracion_snapshot?: number
           precio_snapshot?: number
           service_id?: string
+          variant_id?: string | null
+          variante_nombre?: string | null
         }
         Relationships: [
           {
@@ -207,19 +213,24 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "appointment_services_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "service_variants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       appointments: {
         Row: {
-          cancelado_at: string | null
+          budget_id: string | null
           cancelacion_vista_at: string | null
+          cancelado_at: string | null
           cancelado_por: string | null
           cancelado_por_profile_id: string | null
-          motivo_cancelacion: string | null
-          token_gestion: string
-          codigo: string
-          budget_id: string | null
           client_id: string
+          codigo: string
           comentario_cliente: string | null
           created_at: string
           duracion_min: number
@@ -227,21 +238,21 @@ export type Database = {
           fecha_hora_fin: string
           fecha_hora_inicio: string
           id: string
+          motivo_cancelacion: string | null
           numero: number
           origen: Database["public"]["Enums"]["appointment_origin"]
           profile_id: string | null
+          token_gestion: string
           updated_at: string
         }
         Insert: {
-          cancelado_at?: string | null
+          budget_id?: string | null
           cancelacion_vista_at?: string | null
+          cancelado_at?: string | null
           cancelado_por?: string | null
           cancelado_por_profile_id?: string | null
-          motivo_cancelacion?: string | null
-          token_gestion?: string
-          codigo?: string
-          budget_id?: string | null
           client_id: string
+          codigo?: string
           comentario_cliente?: string | null
           created_at?: string
           duracion_min: number
@@ -249,20 +260,21 @@ export type Database = {
           fecha_hora_fin: string
           fecha_hora_inicio: string
           id?: string
+          motivo_cancelacion?: string | null
           numero?: number
           origen?: Database["public"]["Enums"]["appointment_origin"]
           profile_id?: string | null
+          token_gestion?: string
           updated_at?: string
         }
         Update: {
-          cancelado_at?: string | null
+          budget_id?: string | null
           cancelacion_vista_at?: string | null
+          cancelado_at?: string | null
           cancelado_por?: string | null
           cancelado_por_profile_id?: string | null
-          motivo_cancelacion?: string | null
-          token_gestion?: string
-          budget_id?: string | null
           client_id?: string
+          codigo?: string
           comentario_cliente?: string | null
           created_at?: string
           duracion_min?: number
@@ -270,9 +282,11 @@ export type Database = {
           fecha_hora_fin?: string
           fecha_hora_inicio?: string
           id?: string
+          motivo_cancelacion?: string | null
           numero?: number
           origen?: Database["public"]["Enums"]["appointment_origin"]
           profile_id?: string | null
+          token_gestion?: string
           updated_at?: string
         }
         Relationships: [
@@ -281,6 +295,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_cancelado_por_profile_id_fkey"
+            columns: ["cancelado_por_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -304,16 +325,22 @@ export type Database = {
           budget_id: string
           precio_snapshot: number
           service_id: string
+          variant_id: string | null
+          variante_nombre: string | null
         }
         Insert: {
           budget_id: string
           precio_snapshot: number
           service_id: string
+          variant_id?: string | null
+          variante_nombre?: string | null
         }
         Update: {
           budget_id?: string
           precio_snapshot?: number
           service_id?: string
+          variant_id?: string | null
+          variante_nombre?: string | null
         }
         Relationships: [
           {
@@ -328,6 +355,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "service_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -399,8 +433,8 @@ export type Database = {
           created_at: string
           dia_semana: number
           hora_apertura: string
-          hora_cierre: string
           hora_apertura_2: string | null
+          hora_cierre: string
           hora_cierre_2: string | null
           id: string
           updated_at: string
@@ -410,8 +444,8 @@ export type Database = {
           created_at?: string
           dia_semana: number
           hora_apertura: string
-          hora_cierre: string
           hora_apertura_2?: string | null
+          hora_cierre: string
           hora_cierre_2?: string | null
           id?: string
           updated_at?: string
@@ -421,8 +455,8 @@ export type Database = {
           created_at?: string
           dia_semana?: number
           hora_apertura?: string
-          hora_cierre?: string
           hora_apertura_2?: string | null
+          hora_cierre?: string
           hora_cierre_2?: string | null
           id?: string
           updated_at?: string
@@ -431,42 +465,45 @@ export type Database = {
       }
       business_settings: {
         Row: {
+          anticipacion_cliente_horas: number
+          aviso_sin_tomar_min: number
           capacidad_simultanea: number
           comision_default_pct: number
           created_at: string
+          expiracion_turno_min: number
           id: number
           intervalo_turnos_min: number
           nombre_negocio: string
+          recargo_tarjeta_pct: number
           turnos_expiran: boolean
-          expiracion_turno_min: number
-          aviso_sin_tomar_min: number
-          anticipacion_cliente_horas: number
           updated_at: string
         }
         Insert: {
+          anticipacion_cliente_horas?: number
+          aviso_sin_tomar_min?: number
           capacidad_simultanea?: number
           comision_default_pct?: number
           created_at?: string
+          expiracion_turno_min?: number
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          recargo_tarjeta_pct?: number
           turnos_expiran?: boolean
-          expiracion_turno_min?: number
-          aviso_sin_tomar_min?: number
-          anticipacion_cliente_horas?: number
           updated_at?: string
         }
         Update: {
+          anticipacion_cliente_horas?: number
+          aviso_sin_tomar_min?: number
           capacidad_simultanea?: number
           comision_default_pct?: number
           created_at?: string
+          expiracion_turno_min?: number
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          recargo_tarjeta_pct?: number
           turnos_expiran?: boolean
-          expiracion_turno_min?: number
-          aviso_sin_tomar_min?: number
-          anticipacion_cliente_horas?: number
           updated_at?: string
         }
         Relationships: []
@@ -585,9 +622,9 @@ export type Database = {
           apellido: string
           created_at: string
           cuenta_corriente_habilitada: boolean
+          direccion: string | null
           dni: string | null
           email: string | null
-          direccion: string | null
           id: string
           nombre: string
           notas: string | null
@@ -597,12 +634,12 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
-          apellido: string
+          apellido?: string
           created_at?: string
           cuenta_corriente_habilitada?: boolean
+          direccion?: string | null
           dni?: string | null
           email?: string | null
-          direccion?: string | null
           id?: string
           nombre: string
           notas?: string | null
@@ -615,9 +652,9 @@ export type Database = {
           apellido?: string
           created_at?: string
           cuenta_corriente_habilitada?: boolean
+          direccion?: string | null
           dni?: string | null
           email?: string | null
-          direccion?: string | null
           id?: string
           nombre?: string
           notas?: string | null
@@ -626,6 +663,92 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      email_logs: {
+        Row: {
+          appointment_id: string | null
+          asunto: string | null
+          budget_id: string | null
+          client_id: string | null
+          cliente_nombre: string | null
+          created_at: string
+          email_destino: string | null
+          estado: string
+          id: string
+          motivo: string | null
+          reenviado_at: string | null
+          referencia: string | null
+          resend_id: string | null
+          tipo: string
+          visto_at: string | null
+          work_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          asunto?: string | null
+          budget_id?: string | null
+          client_id?: string | null
+          cliente_nombre?: string | null
+          created_at?: string
+          email_destino?: string | null
+          estado: string
+          id?: string
+          motivo?: string | null
+          reenviado_at?: string | null
+          referencia?: string | null
+          resend_id?: string | null
+          tipo: string
+          visto_at?: string | null
+          work_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          asunto?: string | null
+          budget_id?: string | null
+          client_id?: string | null
+          cliente_nombre?: string | null
+          created_at?: string
+          email_destino?: string | null
+          estado?: string
+          id?: string
+          motivo?: string | null
+          reenviado_at?: string | null
+          referencia?: string | null
+          resend_id?: string | null
+          tipo?: string
+          visto_at?: string | null
+          work_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employee_commissions: {
         Row: {
@@ -732,63 +855,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      email_logs: {
-        Row: {
-          appointment_id: string | null
-          budget_id: string | null
-          client_id: string | null
-          cliente_nombre: string | null
-          created_at: string
-          asunto: string | null
-          email_destino: string | null
-          estado: string
-          id: string
-          motivo: string | null
-          referencia: string | null
-          reenviado_at: string | null
-          resend_id: string | null
-          tipo: string
-          visto_at: string | null
-          work_id: string | null
-        }
-        Insert: {
-          appointment_id?: string | null
-          budget_id?: string | null
-          client_id?: string | null
-          cliente_nombre?: string | null
-          created_at?: string
-          asunto?: string | null
-          email_destino?: string | null
-          estado: string
-          id?: string
-          motivo?: string | null
-          referencia?: string | null
-          reenviado_at?: string | null
-          resend_id?: string | null
-          tipo: string
-          visto_at?: string | null
-          work_id?: string | null
-        }
-        Update: {
-          appointment_id?: string | null
-          budget_id?: string | null
-          client_id?: string | null
-          cliente_nombre?: string | null
-          created_at?: string
-          asunto?: string | null
-          email_destino?: string | null
-          estado?: string
-          id?: string
-          motivo?: string | null
-          referencia?: string | null
-          reenviado_at?: string | null
-          resend_id?: string | null
-          tipo?: string
-          visto_at?: string | null
-          work_id?: string | null
-        }
-        Relationships: []
       }
       notifications: {
         Row: {
@@ -1017,6 +1083,47 @@ export type Database = {
           },
         ]
       }
+      service_variants: {
+        Row: {
+          activo: boolean
+          created_at: string
+          duracion_min: number
+          id: string
+          nombre: string
+          precio: number
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          duracion_min: number
+          id?: string
+          nombre: string
+          precio: number
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          duracion_min?: number
+          id?: string
+          nombre?: string
+          precio?: number
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_variants_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           activo: boolean
@@ -1116,18 +1223,24 @@ export type Database = {
           ficha_tecnica: string | null
           precio_snapshot: number
           service_id: string
+          variant_id: string | null
+          variante_nombre: string | null
           work_id: string
         }
         Insert: {
           ficha_tecnica?: string | null
           precio_snapshot: number
           service_id: string
+          variant_id?: string | null
+          variante_nombre?: string | null
           work_id: string
         }
         Update: {
           ficha_tecnica?: string | null
           precio_snapshot?: number
           service_id?: string
+          variant_id?: string | null
+          variante_nombre?: string | null
           work_id?: string
         }
         Relationships: [
@@ -1136,6 +1249,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "service_variants"
             referencedColumns: ["id"]
           },
           {
@@ -1276,14 +1396,8 @@ export type Database = {
           profile_id: string
         }[]
       }
-      caja_fisica_inicial: {
-        Args: { p_periodo: string }
-        Returns: number
-      }
-      cerrar_mes: {
-        Args: { p_periodo: string }
-        Returns: string
-      }
+      caja_fisica_inicial: { Args: { p_periodo: string }; Returns: number }
+      cerrar_mes: { Args: { p_periodo: string }; Returns: string }
       cobrar_trabajo: {
         Args: { p_pagos: Json; p_work_id: string }
         Returns: {
@@ -1300,6 +1414,8 @@ export type Database = {
           nombre: string
         }[]
       }
+      expirar_turnos_vencidos: { Args: never; Returns: number }
+      generar_codigo_turno: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       liquidar_semana: {
@@ -1322,10 +1438,6 @@ export type Database = {
           p_monto: number
         }
         Returns: undefined
-      }
-      expirar_turnos_vencidos: {
-        Args: Record<PropertyKey, never>
-        Returns: number
       }
       turnos_ocupados_dia: {
         Args: { p_fecha: string }

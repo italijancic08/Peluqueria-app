@@ -24,6 +24,7 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
     defaultValues: {
       nombre_negocio: settings.nombre_negocio,
       comision_default_pct: Number(settings.comision_default_pct),
+      recargo_tarjeta_pct: Number(settings.recargo_tarjeta_pct),
       capacidad_simultanea: settings.capacidad_simultanea,
       intervalo_turnos_min: settings.intervalo_turnos_min,
       turnos_expiran: settings.turnos_expiran,
@@ -78,6 +79,24 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
         </p>
         {errors.comision_default_pct && (
           <p className="text-xs text-red-600">{errors.comision_default_pct.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-neutral-700">Recargo por pago con tarjeta (%)</label>
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          max="300"
+          {...register("recargo_tarjeta_pct", { valueAsNumber: true })}
+        />
+        <p className="text-xs text-neutral-500">
+          El precio con tarjeta se calcula solo: precio en efectivo/transferencia + este porcentaje.
+          Con 40%, un servicio de $10.000 en efectivo sale $14.000 con tarjeta.
+        </p>
+        {errors.recargo_tarjeta_pct && (
+          <p className="text-xs text-red-600">{errors.recargo_tarjeta_pct.message}</p>
         )}
       </div>
 

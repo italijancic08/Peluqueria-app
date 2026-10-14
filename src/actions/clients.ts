@@ -31,7 +31,7 @@ export async function crearCliente(
     .from("clients")
     .insert({
       nombre: parsed.data.nombre,
-      apellido: parsed.data.apellido,
+      apellido: parsed.data.apellido ?? "",
       telefono: parsed.data.telefono,
       dni: parsed.data.dni || null,
       email: parsed.data.email || null,
@@ -86,7 +86,7 @@ export async function actualizarCliente(
     .from("clients")
     .update({
       nombre: parsed.data.nombre,
-      apellido: parsed.data.apellido,
+      apellido: parsed.data.apellido ?? "",
       telefono: parsed.data.telefono,
       dni: parsed.data.dni || null,
       email: parsed.data.email || null,

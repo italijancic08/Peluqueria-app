@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { formatearPesos } from "@/lib/format";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function CuentaCorrientePage() {
   const supabase = await createClient();
@@ -59,7 +60,7 @@ export default async function CuentaCorrientePage() {
             {filas.map((c) => (
               <Tr key={c.id}>
                 <Td>
-                  {c.apellido}, {c.nombre}
+                  {etiquetaCliente(c)}
                 </Td>
                 <Td className={c.saldo > 0 ? "text-red-600 font-medium" : "text-neutral-500"}>
                   {formatearPesos(c.saldo)}

@@ -10,6 +10,7 @@ import { mostrarFecha } from "@/lib/dates";
 import { RUTAS } from "@/constants/routes";
 import { ESTADO_TRABAJO } from "@/constants/labels";
 import { eliminarCliente } from "@/actions/clients";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function ClienteDetallePage({
   params,
@@ -56,7 +57,7 @@ export default async function ClienteDetallePage({
     <div className="space-y-6 max-w-lg">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-neutral-900">
-          {cliente.apellido}, {cliente.nombre}
+          {etiquetaCliente(cliente)}
         </h1>
         <div className="flex gap-2">
           <Link href={`${RUTAS.cliente(cliente.id)}/editar`}>

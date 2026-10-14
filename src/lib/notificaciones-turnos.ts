@@ -3,6 +3,7 @@ import { uno } from "@/lib/turnos/gestion";
 import { mostrarFecha, mostrarFechaHora } from "@/lib/dates";
 import type { CancelacionClienteItem } from "@/components/dashboard/alerta-cancelacion-cliente";
 import type { ReprogramacionClienteItem } from "@/components/dashboard/alerta-reprogramacion-cliente";
+import { etiquetaCliente } from "@/lib/clientes";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -10,7 +11,7 @@ type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 const MAX_AVISOS = 5;
 
 function nombreCliente(c: { nombre: string; apellido: string } | null): string {
-  return c ? `${c.apellido}, ${c.nombre}` : "Un cliente";
+  return c ? etiquetaCliente(c) : "Un cliente";
 }
 
 /** Turnos que el cliente canceló y que nadie del personal vio todavía. */

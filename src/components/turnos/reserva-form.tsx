@@ -12,11 +12,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { hoyISO } from "@/lib/dates";
-import type { Service } from "@/types/models";
+import type { Variantes } from "@/lib/seleccion";
+import type { ServiceWithVariants } from "@/types/models";
 
 type Empleado = { id: string; nombre: string; apellido: string; foto_url: string | null };
 
-export function ReservaForm({ servicios, equipo }: { servicios: Service[]; equipo: Empleado[] }) {
+export function ReservaForm({
+  servicios,
+  equipo,
+  recargoPct,
+}: {
+  servicios: ServiceWithVariants[];
+  equipo: Empleado[];
+  recargoPct: number;
+}) {
 
 type Paso = 1 | 2 | 3;
 
@@ -24,6 +33,7 @@ type Paso = 1 | 2 | 3;
   const [paso, setPaso] = useState<Paso>(1);
 
   const [servicioIds, setServicioIds] = useState<string[]>([]);
+  const [variantes, setVariantes] = useState<Variantes>({});
   const [fecha, setFecha] = useState(() => hoyISO());
   const [slot, setSlot] = useState<string | null>(null);
 
@@ -58,7 +68,7 @@ type Paso = 1 | 2 | 3;
     setEnviando(true);
     const resultado = await crearTurnoPublico({
       nombre, apellido, telefono, email, comentario,
-      servicioIds, fechaHoraInicio: slot,
+      servicioIds, variantes, fechaHoraInicio: slot,
     });
     setEnviando(false);
 
@@ -90,11 +100,20 @@ type Paso = 1 | 2 | 3;
 
       {paso === 1 && (
         <div className="space-y-6">
-          <ServiciosGrid servicios={servicios} value={servicioIds} onChange={setServicioIds} />
+          <ServiciosGrid
+            servicios={servicios}
+            value={servicioIds}
+            onChange={setServicioIds}
+            variantes={variantes}
+            onVariantesChange={setVariantes}
+            recargoPct={recargoPct}
+          />
           <PeluquerasShowcase equipo={equipo} />
           <ResumenSeleccion
             servicios={servicios}
             servicioIds={servicioIds}
+            variantes={variantes}
+            recargoPct={recargoPct}
             onContinuar={() => setPaso(2)}
           />
         </div>
@@ -104,6 +123,7 @@ type Paso = 1 | 2 | 3;
         <div className="space-y-6">
           <HorariosGrid
             servicioIds={servicioIds}
+            variantes={variantes}
             fecha={fecha}
             onFechaChange={setFecha}
             value={slot}
@@ -126,7 +146,7 @@ type Paso = 1 | 2 | 3;
           <h2 className="text-sm font-medium text-[#4A3428]">Tus datos</h2>
           <div className="grid grid-cols-2 gap-3">
             <Input placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-            <Input placeholder="Apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} required />
+            <Input placeholder="Apellido (opcional)" value={apellido} onChange={(e) => setApellido(e.target.value)} />
           </div>
           <Input placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
           <div className="space-y-1.5">

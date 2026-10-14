@@ -5,6 +5,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatearPesos } from "@/lib/format";
 import { ESTADO_TRABAJO } from "@/constants/labels";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function TrabajosPage() {
   const perfil = await requireAuth();
@@ -74,7 +75,7 @@ export default async function TrabajosPage() {
                 <Tr key={t.id}>
                   <Td>#{t.numero}</Td>
                   <Td>
-                    {t.clients?.apellido}, {t.clients?.nombre}
+                    {etiquetaCliente(t.clients)}
                   </Td>
                   <Td>{formatearPesos(t.total)}</Td>
                   <Td>

@@ -5,6 +5,7 @@ import { BuscadorUrl } from "@/components/ui/buscador-url";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { formatearTelefono } from "@/lib/format";
 import { RUTAS } from "@/constants/routes";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function ClientesPage({
   searchParams,
@@ -70,7 +71,7 @@ export default async function ClientesPage({
             {clientes.map((cliente) => (
               <Tr key={cliente.id}>
                 <Td>
-                  {cliente.apellido}, {cliente.nombre}
+                  {etiquetaCliente(cliente)}
                 </Td>
                 <Td>{formatearTelefono(cliente.telefono)}</Td>
                 <Td>{cliente.email ?? "—"}</Td>

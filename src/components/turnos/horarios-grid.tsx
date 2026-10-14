@@ -10,13 +10,14 @@ type Slot = { horaISO: string; disponible: boolean };
 
 type Props = {
   servicioIds: string[];
+  variantes: Record<string, string>;
   fecha: string;
   onFechaChange: (fecha: string) => void;
   value: string | null;
   onChange: (iso: string | null) => void;
 };
 
-export function HorariosGrid({ servicioIds, fecha, onFechaChange, value, onChange }: Props) {
+export function HorariosGrid({ servicioIds, variantes, fecha, onFechaChange, value, onChange }: Props) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function HorariosGrid({ servicioIds, fecha, onFechaChange, value, onChang
     setError(null);
     onChange(null);
 
-    obtenerDisponibilidad(fecha, servicioIds).then((res) => {
+    obtenerDisponibilidad(fecha, servicioIds, variantes).then((res) => {
       setCargando(false);
       if (!res.ok) {
         setError(res.error);
@@ -37,7 +38,7 @@ export function HorariosGrid({ servicioIds, fecha, onFechaChange, value, onChang
       setSlots(res.data.slots);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fecha, servicioIds.join(",")]);
+  }, [fecha, servicioIds.join(","), JSON.stringify(variantes)]);
 
   return (
     <div className="space-y-4">

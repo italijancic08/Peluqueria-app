@@ -10,21 +10,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { CodigoTurno } from "./codigo-turno";
-import type { Client, Service } from "@/types/models";
+import type { Variantes } from "@/lib/seleccion";
+import type { Client, ServiceWithVariants } from "@/types/models";
 
 type PresupuestoPrefill = {
   budgetId: string;
   clientId: string;
   clientLabel: string;
   servicioIds: string[];
+  variantes: Variantes;
 };
 
 type Props = {
-  servicios: Service[];
+  servicios: ServiceWithVariants[];
   presupuesto?: PresupuestoPrefill | null;
+  recargoPct: number;
 };
 
-export function TurnoInternoForm({ servicios, presupuesto }: Props) {
+export function TurnoInternoForm({ servicios, presupuesto, recargoPct }: Props) {
   const router = useRouter();
   const [cliente, setCliente] = useState<Client | null>(
     presupuesto
@@ -37,6 +40,7 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
       : null
   );
   const [servicioIds, setServicioIds] = useState<string[]>(presupuesto?.servicioIds ?? []);
+  const [variantes, setVariantes] = useState<Variantes>(presupuesto?.variantes ?? {});
   const [slot, setSlot] = useState<string | null>(null);
   const [asignarme, setAsignarme] = useState(false);
   const [comentario, setComentario] = useState("");
@@ -61,6 +65,7 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
     const resultado = await crearTurnoInterno({
       clientId: cliente.id,
       servicioIds,
+      variantes,
       fechaHoraInicio: slot,
       asignarme,
       comentario,
@@ -108,12 +113,19 @@ export function TurnoInternoForm({ servicios, presupuesto }: Props) {
 
       <div>
         <h2 className="text-sm font-medium text-neutral-700 mb-2">Servicios</h2>
-        <SelectorServicios servicios={servicios} value={servicioIds} onChange={setServicioIds} />
+        <SelectorServicios
+          servicios={servicios}
+          value={servicioIds}
+          onChange={setServicioIds}
+          variantes={variantes}
+          onVariantesChange={setVariantes}
+          recargoPct={recargoPct}
+        />
       </div>
 
       <div>
         <h2 className="text-sm font-medium text-neutral-700 mb-2">Horario</h2>
-        <TurnoScheduler servicioIds={servicioIds} value={slot} onChange={setSlot} />
+        <TurnoScheduler servicioIds={servicioIds} variantes={variantes} value={slot} onChange={setSlot} />
       </div>
 
       <label className="flex items-center gap-2 text-sm text-neutral-700">

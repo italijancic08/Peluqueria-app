@@ -11,6 +11,7 @@ import { DescargarPdfButton } from "@/components/presupuestos/descargar-pdf-butt
 import { formatearPesos } from "@/lib/format";
 import { mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_PRESUPUESTO } from "@/constants/labels";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function PresupuestoDetallePage({
   params,
@@ -47,8 +48,7 @@ export default async function PresupuestoDetallePage({
           </h1>
 
           <p className="text-sm text-neutral-500">
-            {presupuesto.clients?.apellido},{" "}
-            {presupuesto.clients?.nombre}
+            {etiquetaCliente(presupuesto.clients)}
           </p>
         </div>
 

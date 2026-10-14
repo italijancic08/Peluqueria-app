@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkAuth } from "@/lib/auth/guards";
 import { presupuestoSchema } from "@/lib/validations/budget";
 import { enviarPresupuestoPorEmail } from "@/lib/email/notificar";
+import { resolverServicios } from "@/lib/servicios-elegidos";
+import { etiquetaCliente } from "@/lib/clientes";
 import type { ActionResult, BudgetStatus } from "@/types/models";
 
 export async function crearPresupuesto(
@@ -22,17 +24,12 @@ export async function crearPresupuesto(
     };
   }
 
-  const { clientId, servicioIds, notas } = parsed.data;
+  const { clientId, servicioIds, variantes, notas } = parsed.data;
   const supabase = await createClient();
 
-  const { data: servicios, error: errorServicios } = await supabase
-    .from("services")
-    .select("id, precio")
-    .in("id", servicioIds);
-
-  if (errorServicios || !servicios || servicios.length !== servicioIds.length) {
-    return { ok: false, error: "Alguno de los servicios elegidos no existe." };
-  }
+  const seleccion = await resolverServicios(supabase, servicioIds, variantes);
+  if (!seleccion.ok) return { ok: false, error: seleccion.error };
+  const servicios = seleccion.items;
 
   const total = servicios.reduce((acc, s) => acc + Number(s.precio), 0);
 
@@ -51,6 +48,8 @@ export async function crearPresupuesto(
       budget_id: presupuesto.id,
       service_id: s.id,
       precio_snapshot: s.precio,
+      variant_id: s.variant_id,
+      variante_nombre: s.variante_nombre,
     }))
   );
 
@@ -91,7 +90,14 @@ export async function actualizarEstadoPresupuesto(
 /** Trae los datos de un presupuesto aceptado para precargar el turno. */
 export async function obtenerPresupuestoParaTurno(
   id: string
-): Promise<ActionResult<{ clientId: string; clientLabel: string; servicioIds: string[] }>> {
+): Promise<
+  ActionResult<{
+    clientId: string;
+    clientLabel: string;
+    servicioIds: string[];
+    variantes: Record<string, string>;
+  }>
+> {
   const perfil = await checkAuth();
   if (!perfil) return { ok: false, error: "No autorizado." };
 
@@ -109,15 +115,20 @@ export async function obtenerPresupuestoParaTurno(
 
   const { data: items } = await supabase
     .from("budget_items")
-    .select("service_id")
+    .select("service_id, variant_id")
     .eq("budget_id", id);
 
   return {
     ok: true,
     data: {
       clientId: presupuesto.client_id,
-      clientLabel: `${presupuesto.clients?.apellido}, ${presupuesto.clients?.nombre}`,
+      clientLabel: etiquetaCliente(presupuesto.clients),
       servicioIds: (items ?? []).map((i) => i.service_id),
+      variantes: Object.fromEntries(
+        (items ?? [])
+          .filter((i) => i.variant_id)
+          .map((i) => [i.service_id, i.variant_id as string])
+      ),
     },
   };
 }

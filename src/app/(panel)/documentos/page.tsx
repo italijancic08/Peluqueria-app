@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/guards";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFecha } from "@/lib/dates";
+import { etiquetaCliente } from "@/lib/clientes";
 
 type MesReporte = {
   valor: string;
@@ -58,7 +59,7 @@ function FilaTrabajo({
   t: any;
 }) {
   const nombreCliente = t.clients
-    ? `${t.clients.apellido}, ${t.clients.nombre}`
+    ? etiquetaCliente(t.clients)
     : "";
 
   return (
@@ -101,7 +102,7 @@ function FilaPresupuesto({
   p: any;
 }) {
   const nombreCliente = p.clients
-    ? `${p.clients.apellido}, ${p.clients.nombre}`
+    ? etiquetaCliente(p.clients)
     : "";
 
   return (

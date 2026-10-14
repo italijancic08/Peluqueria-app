@@ -4,6 +4,7 @@ import { BarraHorizontal } from "@/components/estadisticas/barra-horizontal";
 import { ClienteTopCard } from "@/components/estadisticas/cliente-top-card";
 import { formatearPesos } from "@/lib/format";
 import { TrendingUp, TrendingDown, Scissors, Trophy } from "lucide-react";
+import { etiquetaCliente } from "@/lib/clientes";
 
 function primerYUltimoDelMes() {
   const hoy = new Date();
@@ -68,7 +69,7 @@ export default async function EstadisticasPage() {
 
   const gastoPorCliente = new Map<string, { nombre: string; total: number }>();
   for (const w of trabajosCobradosMes ?? []) {
-    const nombre = w.clients ? `${(w as any).clients.apellido}, ${(w as any).clients.nombre}` : "—";
+    const nombre = w.clients ? etiquetaCliente((w as any).clients) : "—";
     const actual = gastoPorCliente.get(w.client_id) ?? { nombre, total: 0 };
     actual.total += Number(w.total);
     gastoPorCliente.set(w.client_id, actual);

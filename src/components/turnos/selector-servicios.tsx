@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import { Search, X } from "lucide-react";
-import type { Service } from "@/types/models";
+import { variantesActivas, type Variantes } from "@/lib/seleccion";
+import { PreciosDuales } from "./precios-duales";
+import { SelectorVariante } from "./selector-variante";
+import type { ServiceWithVariants } from "@/types/models";
 import { Input } from "@/components/ui/input";
-import { formatearPesos } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  servicios: Service[];
+  servicios: ServiceWithVariants[];
   value: string[];
   onChange: (ids: string[]) => void;
+  variantes: Variantes;
+  onVariantesChange: (variantes: Variantes) => void;
+  recargoPct: number;
 };
 
 // Ignora mayúsculas y tildes: "peinado" encuentra "Péinado", etc.
@@ -22,7 +27,14 @@ function normalizar(texto: string) {
     .trim();
 }
 
-export function SelectorServicios({ servicios, value, onChange }: Props) {
+export function SelectorServicios({
+  servicios,
+  value,
+  onChange,
+  variantes,
+  onVariantesChange,
+  recargoPct,
+}: Props) {
   const [busqueda, setBusqueda] = useState("");
 
   const termino = normalizar(busqueda);
@@ -33,6 +45,9 @@ export function SelectorServicios({ servicios, value, onChange }: Props) {
   function alternar(id: string) {
     if (value.includes(id)) {
       onChange(value.filter((v) => v !== id));
+      const resto = { ...variantes };
+      delete resto[id];
+      onVariantesChange(resto);
     } else {
       onChange([...value, id]);
     }
@@ -88,7 +103,11 @@ export function SelectorServicios({ servicios, value, onChange }: Props) {
                 {s.nombre}
                 <span className="text-[#9C8577]">({s.duracion_min} min)</span>
               </span>
-              <span className="text-[#9C8577]">{formatearPesos(s.precio)}</span>
+              <PreciosDuales
+                precio={s.precio}
+                recargoPct={recargoPct}
+                desde={variantesActivas(s).length > 0}
+              />
             </label>
           );
         })}
@@ -96,6 +115,18 @@ export function SelectorServicios({ servicios, value, onChange }: Props) {
           <p className="text-sm text-[#9C8577]">No hay servicios que coincidan.</p>
         )}
       </div>
+
+      {servicios
+        .filter((s) => value.includes(s.id) && variantesActivas(s).length > 0)
+        .map((s) => (
+          <SelectorVariante
+            key={s.id}
+            servicio={s}
+            value={variantes[s.id]}
+            recargoPct={recargoPct}
+            onChange={(varianteId) => onVariantesChange({ ...variantes, [s.id]: varianteId })}
+          />
+        ))}
 
       {value.length > 0 && (
         <p className="text-xs text-[#9C8577]">

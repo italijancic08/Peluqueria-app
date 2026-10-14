@@ -26,6 +26,7 @@ export async function actualizarConfiguracion(valores: unknown): Promise<ActionR
     .update({
       nombre_negocio: parsed.data.nombre_negocio,
       comision_default_pct: parsed.data.comision_default_pct,
+      recargo_tarjeta_pct: parsed.data.recargo_tarjeta_pct,
       capacidad_simultanea: parsed.data.capacidad_simultanea,
       intervalo_turnos_min: parsed.data.intervalo_turnos_min,
       turnos_expiran: parsed.data.turnos_expiran,

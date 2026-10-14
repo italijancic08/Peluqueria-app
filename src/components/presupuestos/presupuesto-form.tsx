@@ -12,17 +12,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 import { formatearPesos } from "@/lib/format";
+import { precioTarjeta } from "@/lib/precios";
+import { resolverElegidos, type Variantes } from "@/lib/seleccion";
 import { RUTAS } from "@/constants/routes";
 
-import type {
-  Client,
-  Service,
-} from "@/types/models";
+import type { Client, ServiceWithVariants } from "@/types/models";
 
 export function PresupuestoForm({
   servicios,
+  recargoPct,
 }: {
-  servicios: Service[];
+  servicios: ServiceWithVariants[];
+  recargoPct: number;
 }) {
   const router = useRouter();
 
@@ -32,6 +33,8 @@ export function PresupuestoForm({
   const [servicioIds, setServicioIds] =
     useState<string[]>([]);
 
+  const [variantes, setVariantes] = useState<Variantes>({});
+
   const [notas, setNotas] = useState("");
 
   const [error, setError] =
@@ -40,15 +43,8 @@ export function PresupuestoForm({
   const [enviando, setEnviando] =
     useState(false);
 
-  const total = servicios
-    .filter((s) =>
-      servicioIds.includes(s.id)
-    )
-    .reduce(
-      (acc, s) =>
-        acc + Number(s.precio),
-      0
-    );
+  const { items, faltantes } = resolverElegidos(servicios, servicioIds, variantes);
+  const total = items.reduce((acc, i) => acc + i.precio, 0);
 
   async function handleSubmit(
     e: React.FormEvent
@@ -69,12 +65,18 @@ export function PresupuestoForm({
       return;
     }
 
+    if (faltantes.length > 0) {
+      setError(`Elegí una opción para: ${faltantes.map((s) => s.nombre).join(", ")}.`);
+      return;
+    }
+
     setEnviando(true);
 
     const resultado =
       await crearPresupuesto({
         clientId: cliente.id,
         servicioIds,
+        variantes,
         notas,
       });
 
@@ -124,18 +126,22 @@ export function PresupuestoForm({
           servicios={servicios}
           value={servicioIds}
           onChange={setServicioIds}
+          variantes={variantes}
+          onVariantesChange={setVariantes}
+          recargoPct={recargoPct}
         />
       </div>
 
       {servicioIds.length > 0 && (
-        <div className="flex items-center justify-between text-sm font-medium border-t border-neutral-200 pt-3">
-          <span className="text-neutral-700">
-            Total estimado
-          </span>
-
-          <span className="text-neutral-900">
-            {formatearPesos(total)}
-          </span>
+        <div className="space-y-1 border-t border-neutral-200 pt-3 text-sm font-medium">
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total efectivo / transferencia</span>
+            <span className="text-neutral-900">{formatearPesos(total)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total con tarjeta (+{recargoPct}%)</span>
+            <span className="text-neutral-900">{formatearPesos(precioTarjeta(total, recargoPct))}</span>
+          </div>
         </div>
       )}
 

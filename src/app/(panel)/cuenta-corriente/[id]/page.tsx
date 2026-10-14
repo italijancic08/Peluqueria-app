@@ -5,6 +5,7 @@ import { FilaMovimientoCC } from "@/components/cuenta-corriente/fila-movimiento-
 import { MovimientoCCManualForm } from "@/components/cuenta-corriente/movimiento-cc-manual-form";
 import { PagoCCForm } from "@/components/cuenta-corriente/pago-cc-form";
 import { formatearPesos } from "@/lib/format";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function CuentaCorrienteClientePage({
   params,
@@ -33,7 +34,7 @@ export default async function CuentaCorrienteClientePage({
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-xl font-semibold text-neutral-900">
-          Cuenta corriente — {cliente.apellido}, {cliente.nombre}
+          Cuenta corriente — {etiquetaCliente(cliente)}
         </h1>
         <p className={`text-sm ${saldo > 0 ? "text-red-600 font-medium" : "text-neutral-500"}`}>
           Saldo: {formatearPesos(saldo)}

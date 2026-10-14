@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { SelectorFechaAgenda } from "@/components/turnos/selector-fecha-agenda";
 import { CancelarTurnoButton } from "@/components/turnos/cancelar-turno-button";
+import { etiquetaCliente } from "@/lib/clientes";
 import {
   ReprogramarTurnoButton,
   RetirarPropuestaButton,
@@ -64,7 +65,7 @@ export default async function TurnosPage({
       {
         id: s.id,
         numero: turno.numero,
-        cliente: cliente ? `${cliente.apellido}, ${cliente.nombre}` : "—",
+        cliente: cliente ? etiquetaCliente(cliente) : "—",
         telefono: cliente?.telefono ?? null,
         inicioActual: turno.fecha_hora_inicio,
         inicioPropuesto: s.fecha_hora_inicio_propuesta,

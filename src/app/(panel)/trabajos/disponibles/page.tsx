@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { TomarTrabajoButton } from "@/components/trabajos/tomar-trabajo-button";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFechaHora } from "@/lib/dates";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function TrabajosDisponiblesPage() {
   const supabase = await createClient();
@@ -70,7 +71,7 @@ export default async function TrabajosDisponiblesPage() {
                     )}
                   </Td>
                   <Td>
-                    {t.clients?.apellido}, {t.clients?.nombre}
+                    {etiquetaCliente(t.clients)}
                   </Td>
                   <Td>{formatearPesos(t.total)}</Td>
                   <Td className="text-right">

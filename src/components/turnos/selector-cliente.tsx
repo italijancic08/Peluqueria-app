@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Buscador } from "@/components/ui/buscador";
 import { useDebounce } from "@/lib/use-debounce";
 import type { Client } from "@/types/models";
+import { etiquetaCliente } from "@/lib/clientes";
 
 type Props = {
   value: Client | null;
@@ -52,8 +53,8 @@ export function SelectorCliente({ value, onChange }: Props) {
   async function crear() {
     setErrorCreacion(null);
 
-    if (!nombre.trim() || !apellido.trim() || !telefono.trim()) {
-      setErrorCreacion("Completá nombre, apellido y teléfono.");
+    if (!nombre.trim() || !telefono.trim()) {
+      setErrorCreacion("Completá nombre y teléfono.");
       return;
     }
 
@@ -77,7 +78,7 @@ export function SelectorCliente({ value, onChange }: Props) {
     return (
       <div className="flex items-center justify-between rounded-md border border-[#EDD9C4] px-3 py-2 text-sm">
         <span>
-          {value.apellido}, {value.nombre} — {value.telefono}
+          {etiquetaCliente(value)} — {value.telefono}
         </span>
         <Button type="button" variant="ghost" onClick={() => onChange(null)}>
           Cambiar
@@ -92,7 +93,7 @@ export function SelectorCliente({ value, onChange }: Props) {
         {errorCreacion && <p className="text-xs text-red-600">{errorCreacion}</p>}
         <div className="grid grid-cols-2 gap-2">
           <Input placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          <Input placeholder="Apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} />
+          <Input placeholder="Apellido (opcional)" value={apellido} onChange={(e) => setApellido(e.target.value)} />
         </div>
         <Input placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         <div className="flex gap-2">
@@ -124,7 +125,7 @@ export function SelectorCliente({ value, onChange }: Props) {
               onClick={() => elegir(c)}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-[#F6E4D3]"
             >
-              {c.apellido}, {c.nombre} — {c.telefono}
+              {etiquetaCliente(c)} — {c.telefono}
             </button>
           ))}
           <button

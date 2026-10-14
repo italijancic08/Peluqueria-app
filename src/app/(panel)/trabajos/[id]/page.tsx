@@ -9,6 +9,7 @@ import { CobrarTrabajoForm } from "@/components/trabajos/cobrar-trabajo-form";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFecha, mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_TRABAJO, MEDIO_PAGO } from "@/constants/labels";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function TrabajoDetallePage({
   params,
@@ -56,7 +57,7 @@ export default async function TrabajoDetallePage({
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Trabajo #{trabajo.numero}</h1>
           <p className="text-sm text-neutral-500">
-            {trabajo.clients?.apellido}, {trabajo.clients?.nombre}
+            {etiquetaCliente(trabajo.clients)}
           </p>
         </div>
         <Badge

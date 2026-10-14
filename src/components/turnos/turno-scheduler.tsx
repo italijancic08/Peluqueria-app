@@ -10,11 +10,12 @@ type Slot = { horaISO: string; disponible: boolean };
 
 type Props = {
   servicioIds: string[];
+  variantes: Record<string, string>;
   value: string | null;
   onChange: (iso: string | null) => void;
 };
 
-export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
+export function TurnoScheduler({ servicioIds, variantes, value, onChange }: Props) {
   const [fecha, setFecha] = useState<string>(() => hoyISO());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -30,7 +31,7 @@ export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
     setError(null);
     onChange(null);
 
-    obtenerDisponibilidad(fecha, servicioIds).then((res) => {
+    obtenerDisponibilidad(fecha, servicioIds, variantes).then((res) => {
       setCargando(false);
       if (!res.ok) {
         setError(res.error);
@@ -40,7 +41,7 @@ export function TurnoScheduler({ servicioIds, value, onChange }: Props) {
       setSlots(res.data.slots);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fecha, servicioIds.join(",")]);
+  }, [fecha, servicioIds.join(","), JSON.stringify(variantes)]);
 
   return (
     <div className="space-y-3">

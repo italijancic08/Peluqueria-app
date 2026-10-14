@@ -6,15 +6,28 @@ import { cn } from "@/lib/utils";
 import { formatearPesos } from "@/lib/format";
 import { normalizarTexto } from "@/lib/texto";
 import { iconoParaServicio } from "@/lib/service-icons";
-import type { Service } from "@/types/models";
+import { precioTarjeta } from "@/lib/precios";
+import { variantesActivas, type Variantes } from "@/lib/seleccion";
+import { SelectorVariante } from "./selector-variante";
+import type { ServiceWithVariants } from "@/types/models";
 
 type Props = {
-  servicios: Service[];
+  servicios: ServiceWithVariants[];
   value: string[];
   onChange: (ids: string[]) => void;
+  variantes: Variantes;
+  onVariantesChange: (variantes: Variantes) => void;
+  recargoPct: number;
 };
 
-export function ServiciosGrid({ servicios, value, onChange }: Props) {
+export function ServiciosGrid({
+  servicios,
+  value,
+  onChange,
+  variantes,
+  onVariantesChange,
+  recargoPct,
+}: Props) {
   const [busqueda, setBusqueda] = useState("");
 
   const termino = normalizarTexto(busqueda);
@@ -23,9 +36,15 @@ export function ServiciosGrid({ servicios, value, onChange }: Props) {
     : servicios;
 
   function alternar(id: string) {
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+      const resto = { ...variantes };
+      delete resto[id];
+      onVariantesChange(resto);
+    } else {
+      onChange([...value, id]);
+    }
   }
-
   return (
     <div className="space-y-4">
       <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar servicio" />
@@ -54,7 +73,11 @@ export function ServiciosGrid({ servicios, value, onChange }: Props) {
                   <Icon className={cn("h-6 w-6", seleccionado ? "text-white" : "text-[#6B4635]")} />
                 </span>
                 <span className="text-xs font-medium text-[#4A3428] leading-tight">{s.nombre}</span>
-                <span className="text-xs text-[#9C8577]">{formatearPesos(s.precio)}</span>
+                <span className="flex flex-col text-[11px] leading-tight text-[#9C8577]">
+                  {variantesActivas(s).length > 0 && <span>Desde</span>}
+                  <span>Efect. {formatearPesos(s.precio)}</span>
+                  <span>Tarj. {formatearPesos(precioTarjeta(s.precio, recargoPct))}</span>
+                </span>
               </button>
             );
           })}
@@ -63,6 +86,18 @@ export function ServiciosGrid({ servicios, value, onChange }: Props) {
           )}
         </div>
       </div>
+
+      {servicios
+        .filter((s) => value.includes(s.id) && variantesActivas(s).length > 0)
+        .map((s) => (
+          <SelectorVariante
+            key={s.id}
+            servicio={s}
+            value={variantes[s.id]}
+            recargoPct={recargoPct}
+            onChange={(varianteId) => onVariantesChange({ ...variantes, [s.id]: varianteId })}
+          />
+        ))}
     </div>
   );
 }

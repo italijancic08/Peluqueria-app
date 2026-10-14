@@ -6,6 +6,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFecha } from "@/lib/dates";
 import { ESTADO_PRESUPUESTO } from "@/constants/labels";
+import { etiquetaCliente } from "@/lib/clientes";
 
 export default async function PresupuestosPage() {
   const supabase = await createClient();
@@ -48,7 +49,7 @@ export default async function PresupuestosPage() {
               <Tr key={p.id}>
                 <Td>#{p.numero}</Td>
                 <Td>
-                  {p.clients?.apellido}, {p.clients?.nombre}
+                  {etiquetaCliente(p.clients)}
                 </Td>
                 <Td>{mostrarFecha(p.created_at)}</Td>
                 <Td>{formatearPesos(p.total)}</Td>

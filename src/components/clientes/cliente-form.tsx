@@ -105,7 +105,7 @@ export function ClienteForm(props: ClienteFormProps) {
 
         <div className="space-y-1">
           <label className="text-sm font-medium text-neutral-700">
-            Apellido
+            Apellido (opcional)
           </label>
           <Input {...register("apellido")} />
           {errors.apellido && (

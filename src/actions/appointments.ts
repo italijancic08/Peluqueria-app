@@ -11,11 +11,13 @@ import { reservaPublicaSchema, turnoInternoSchema } from "@/lib/validations/appo
 import { motivoSchema } from "@/lib/validations/reprogramacion";
 import { cancelarTurnoComun } from "@/lib/turnos/operaciones";
 import { enviarEmailTurnoConfirmado } from "@/lib/email/notificar";
+import { resolverServicios } from "@/lib/servicios-elegidos";
 import type { ActionResult } from "@/types/models";
 
 export async function obtenerDisponibilidad(
   fechaISO: string,
-  servicioIds: string[]
+  servicioIds: string[],
+  variantes: Record<string, string> = {}
 ): Promise<ActionResult<{ slots: { horaISO: string; disponible: boolean }[]; duracionMin: number }>> {
   if (!fechaISO || servicioIds.length === 0) {
     return { ok: false, error: "Elegí al menos un servicio y una fecha." };
@@ -24,10 +26,10 @@ export async function obtenerDisponibilidad(
   const supabase = await createClient();
   const diaSemana = new Date(`${fechaISO}T00:00:00`).getDay();
 
-  const [{ data: horario }, { data: settings }, { data: servicios }] = await Promise.all([
+  const [{ data: horario }, { data: settings }, seleccion] = await Promise.all([
     supabase.from("business_hours").select("*").eq("dia_semana", diaSemana).eq("activo", true).maybeSingle(),
     supabase.from("business_settings").select("*").eq("id", 1).single(),
-    supabase.from("services").select("id, duracion_min, cupo_maximo").in("id", servicioIds),
+    resolverServicios(supabase, servicioIds, variantes),
   ]);
 
   if (!horario) {
@@ -36,9 +38,10 @@ export async function obtenerDisponibilidad(
   if (!settings) {
     return { ok: false, error: "No se pudo leer la configuración del negocio." };
   }
-  if (!servicios || servicios.length !== servicioIds.length) {
-    return { ok: false, error: "Alguno de los servicios elegidos no existe." };
+  if (!seleccion.ok) {
+    return { ok: false, error: seleccion.error };
   }
+  const servicios = seleccion.items;
 
   const duracionMin = servicios.reduce((acc, s) => acc + s.duracion_min, 0);
 
@@ -139,7 +142,8 @@ export async function crearTurnoPublico(
     };
   }
 
-  const { nombre, apellido, telefono, email, servicioIds, fechaHoraInicio, comentario } = parsed.data;
+  const { nombre, apellido, telefono, email, servicioIds, variantes, fechaHoraInicio, comentario } =
+    parsed.data;
   const admin = createAdminClient();
 
   const telefonoNorm = normalizarTelefono(telefono);
@@ -159,7 +163,7 @@ export async function crearTurnoPublico(
   if (!clientId) {
     const { data: nuevoCliente, error: errorCliente } = await admin
       .from("clients")
-      .insert({ nombre, apellido, telefono, email: email || null })
+      .insert({ nombre, apellido: apellido ?? "", telefono, email: email || null })
       .select("id")
       .single();
 
@@ -169,15 +173,9 @@ export async function crearTurnoPublico(
     clientId = nuevoCliente.id;
   }
 
-  const { data: servicios, error: errorServicios } = await admin
-    .from("services")
-    .select("id, precio, duracion_min")
-    .in("id", servicioIds)
-    .eq("activo", true);
-
-  if (errorServicios || !servicios || servicios.length !== servicioIds.length) {
-    return { ok: false, error: "Alguno de los servicios elegidos ya no está disponible." };
-  }
+  const seleccion = await resolverServicios(admin, servicioIds, variantes, { soloActivos: true });
+  if (!seleccion.ok) return { ok: false, error: seleccion.error };
+  const servicios = seleccion.items;
 
   const duracionTotal = servicios.reduce((acc, s) => acc + s.duracion_min, 0);
   const inicio = new Date(fechaHoraInicio);
@@ -211,6 +209,8 @@ export async function crearTurnoPublico(
       service_id: s.id,
       precio_snapshot: s.precio,
       duracion_snapshot: s.duracion_min,
+      variant_id: s.variant_id,
+      variante_nombre: s.variante_nombre,
     }))
   );
 
@@ -230,7 +230,13 @@ export async function crearTurnoPublico(
   }
 
   const { error: errorWorkItems } = await admin.from("work_items").insert(
-    servicios.map((s) => ({ work_id: trabajo.id, service_id: s.id, precio_snapshot: s.precio }))
+    servicios.map((s) => ({
+      work_id: trabajo.id,
+      service_id: s.id,
+      precio_snapshot: s.precio,
+      variant_id: s.variant_id,
+      variante_nombre: s.variante_nombre,
+    }))
   );
 
   if (errorWorkItems) {
@@ -261,17 +267,13 @@ export async function crearTurnoInterno(
     };
   }
 
-  const { clientId, servicioIds, fechaHoraInicio, asignarme, comentario, budgetId } = parsed.data;
+  const { clientId, servicioIds, variantes, fechaHoraInicio, asignarme, comentario, budgetId } =
+    parsed.data;
   const supabase = await createClient();
 
-  const { data: servicios, error: errorServicios } = await supabase
-    .from("services")
-    .select("id, precio, duracion_min")
-    .in("id", servicioIds);
-
-  if (errorServicios || !servicios || servicios.length !== servicioIds.length) {
-    return { ok: false, error: "Alguno de los servicios elegidos no existe." };
-  }
+  const seleccion = await resolverServicios(supabase, servicioIds, variantes);
+  if (!seleccion.ok) return { ok: false, error: seleccion.error };
+  const servicios = seleccion.items;
 
   const duracionTotal = servicios.reduce((acc, s) => acc + s.duracion_min, 0);
   const inicio = new Date(fechaHoraInicio);
@@ -310,6 +312,8 @@ export async function crearTurnoInterno(
       service_id: s.id,
       precio_snapshot: s.precio,
       duracion_snapshot: s.duracion_min,
+      variant_id: s.variant_id,
+      variante_nombre: s.variante_nombre,
     }))
   );
 
@@ -337,7 +341,13 @@ export async function crearTurnoInterno(
   }
 
   const { error: errorWorkItems } = await supabase.from("work_items").insert(
-    servicios.map((s) => ({ work_id: trabajo.id, service_id: s.id, precio_snapshot: s.precio }))
+    servicios.map((s) => ({
+      work_id: trabajo.id,
+      service_id: s.id,
+      precio_snapshot: s.precio,
+      variant_id: s.variant_id,
+      variante_nombre: s.variante_nombre,
+    }))
   );
 
   if (errorWorkItems) {
