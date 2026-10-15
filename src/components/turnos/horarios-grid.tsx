@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { obtenerDisponibilidad } from "@/actions/appointments";
 import { cn } from "@/lib/utils";
-import { mostrarHora } from "@/lib/dates";
+import { mostrarFinEstimado, mostrarHora } from "@/lib/dates";
 import { SelectorFechaTira } from "./selector-fecha-tira";
 
 type Slot = { horaISO: string; disponible: boolean };
@@ -19,6 +19,7 @@ type Props = {
 
 export function HorariosGrid({ servicioIds, variantes, fecha, onFechaChange, value, onChange }: Props) {
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [duracionMin, setDuracionMin] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +37,7 @@ export function HorariosGrid({ servicioIds, variantes, fecha, onFechaChange, val
         return;
       }
       setSlots(res.data.slots);
+      setDuracionMin(res.data.duracionMin);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fecha, servicioIds.join(","), JSON.stringify(variantes)]);
@@ -77,6 +79,14 @@ export function HorariosGrid({ servicioIds, variantes, fecha, onFechaChange, val
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {value && duracionMin > 0 && (
+          <div className="mt-3 rounded-lg border border-[#EDD9C4] bg-[#FBF3EA] px-3 py-2 text-sm text-[#4A3428]">
+            Finalización estimada:{" "}
+            <span className="font-semibold">{mostrarFinEstimado(value, duracionMin)}</span>
+            <p className="text-xs text-[#9C8577]">Es un horario aproximado, puede variar según el trabajo.</p>
           </div>
         )}
       </div>

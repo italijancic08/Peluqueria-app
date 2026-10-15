@@ -36,3 +36,15 @@ export function semanaLaboral(fecha: Date): { inicio: Date; fin: Date } {
   const inicio = startOfWeek(fecha, { weekStartsOn: 1 });
   return { inicio, fin: addDays(inicio, 5) };
 }
+
+/**
+ * Horario estimado de finalización de un turno: "22:30", o "01:00 (día siguiente)"
+ * si el turno termina después de la medianoche.
+ */
+export function mostrarFinEstimado(inicio: string | Date, duracionMin: number): string {
+  const fin = new Date(new Date(inicio).getTime() + duracionMin * 60000);
+  const hora = mostrarHora(fin);
+  return mostrarFecha(fin, "yyyy-MM-dd") === mostrarFecha(inicio, "yyyy-MM-dd")
+    ? hora
+    : `${hora} (día siguiente)`;
+}
