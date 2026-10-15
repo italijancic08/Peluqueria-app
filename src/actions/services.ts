@@ -174,3 +174,27 @@ export async function alternarServicioActivo(
   revalidatePath("/servicios");
   return { ok: true, data: undefined };
 }
+
+
+export async function eliminarServicio(id: string): Promise<ActionResult> {
+  const perfil = await checkAdmin();
+  if (!perfil) return { ok: false, error: "Solo un administrador puede eliminar servicios." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("services").delete().eq("id", id);
+
+  if (error) {
+    // 23503 = foreign key: el servicio ya se usó en turnos, trabajos o presupuestos.
+    if (error.code === "23503") {
+      return {
+        ok: false,
+        error:
+          "No se puede eliminar: este servicio ya se usó en turnos, trabajos o presupuestos. Desactivalo para que deje de ofrecerse.",
+      };
+    }
+    return { ok: false, error: "No se pudo eliminar el servicio." };
+  }
+
+  revalidatePath("/servicios");
+  return { ok: true, data: undefined };
+}

@@ -42,6 +42,35 @@ h1, h2, h3 {
   display: none; /* Chrome, Safari, Edge nuevo */
 }
 
+/* Scroll de la sidebar: barra a la izquierda y con los colores de la página */
+.scroll-izquierda {
+  direction: rtl; /* mueve la barra al lado izquierdo */
+  overflow-y: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #e8c7a6 transparent;
+}
+
+.scroll-izquierda > * {
+  direction: ltr; /* el contenido se lee normal */
+}
+
+.scroll-izquierda::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-izquierda::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-izquierda::-webkit-scrollbar-thumb {
+  background-color: #e8c7a6;
+  border-radius: 9999px;
+}
+
+.scroll-izquierda::-webkit-scrollbar-thumb:hover {
+  background-color: #9c8577;
+}
+
 /* iOS hace zoom al enfocar campos con fuente menor a 16px */
 @media (max-width: 640px) {
   input,

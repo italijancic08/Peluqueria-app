@@ -474,6 +474,7 @@ export type Database = {
           id: number
           intervalo_turnos_min: number
           nombre_negocio: string
+          recargo_debito_pct: number
           recargo_tarjeta_pct: number
           turnos_expiran: boolean
           updated_at: string
@@ -488,6 +489,7 @@ export type Database = {
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          recargo_debito_pct?: number
           recargo_tarjeta_pct?: number
           turnos_expiran?: boolean
           updated_at?: string
@@ -502,6 +504,7 @@ export type Database = {
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
+          recargo_debito_pct?: number
           recargo_tarjeta_pct?: number
           turnos_expiran?: boolean
           updated_at?: string

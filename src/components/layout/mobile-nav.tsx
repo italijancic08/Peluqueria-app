@@ -107,7 +107,7 @@ export function MobileNav({ rol, nombre }: Props) {
           />
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto p-3 text-sm">
+        <nav className="flex-1 space-y-0.5 scroll-izquierda p-3 text-sm">
           {items.map((item, index) => {
             const activo =
               pathname === item.href || pathname.startsWith(`${item.href}/`);

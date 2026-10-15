@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { ToggleActivo } from "@/components/servicios/toggle-activo";
+import { EliminarServicioButton } from "@/components/servicios/eliminar-servicio-button";
 import { formatearPesos } from "@/lib/format";
 import { precioTarjeta } from "@/lib/precios";
 import { obtenerRecargoTarjeta } from "@/lib/recargo";
@@ -85,6 +86,7 @@ export default async function ServiciosPage() {
                         Editar
                       </Link>
                       <ToggleActivo id={servicio.id} activo={servicio.activo} />
+                      <EliminarServicioButton id={servicio.id} nombre={servicio.nombre} />
                     </Td>
                   </Tr>
 

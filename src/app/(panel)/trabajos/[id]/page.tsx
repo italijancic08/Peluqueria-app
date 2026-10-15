@@ -8,7 +8,7 @@ import { FinalizarTrabajoForm } from "@/components/trabajos/finalizar-trabajo-fo
 import { CobrarTrabajoForm } from "@/components/trabajos/cobrar-trabajo-form";
 import { formatearPesos } from "@/lib/format";
 import { precioTarjeta } from "@/lib/precios";
-import { obtenerRecargoTarjeta } from "@/lib/recargo";
+import { obtenerRecargosTarjeta } from "@/lib/recargo";
 import { mostrarFecha, mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_TRABAJO, MEDIO_PAGO } from "@/constants/labels";
 import { etiquetaCliente } from "@/lib/clientes";
@@ -36,7 +36,7 @@ export default async function TrabajoDetallePage({
     { data: productos },
     { data: pagos },
     { data: trabajosAnteriores },
-    recargoPct,
+    recargos,
   ] = await Promise.all([
     supabase.from("work_items").select("*, services(nombre, tiene_ficha_tecnica)").eq("work_id", id),
     supabase.from("products").select("*").eq("activo", true).order("nombre"),
@@ -50,7 +50,7 @@ export default async function TrabajoDetallePage({
       .neq("estado", "CANCELADO")
       .order("created_at", { ascending: false })
       .limit(10),
-    obtenerRecargoTarjeta(),
+    obtenerRecargosTarjeta(),
   ]);
 
   // El saldo se mide en precio base (efectivo/transferencia): cada pago cubre "monto_base".
@@ -108,8 +108,12 @@ export default async function TrabajoDetallePage({
             <span className="text-neutral-900">{formatearPesos(trabajo.total)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-neutral-700">Total con tarjeta (+{recargoPct}%)</span>
-            <span className="text-neutral-900">{formatearPesos(precioTarjeta(trabajo.total, recargoPct))}</span>
+            <span className="text-neutral-700">Total con débito (+{recargos.debito}%)</span>
+            <span className="text-neutral-900">{formatearPesos(precioTarjeta(trabajo.total, recargos.debito))}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total con crédito (+{recargos.credito}%)</span>
+            <span className="text-neutral-900">{formatearPesos(precioTarjeta(trabajo.total, recargos.credito))}</span>
           </div>
         </div>
       </div>
@@ -159,7 +163,8 @@ export default async function TrabajoDetallePage({
             id={trabajo.id}
             saldoPendiente={saldoPendiente}
             cuentaCorrienteHabilitada={Boolean(trabajo.clients?.cuenta_corriente_habilitada)}
-            recargoPct={recargoPct}
+            recargoCreditoPct={recargos.credito}
+            recargoDebitoPct={recargos.debito}
           />
         </div>
       )}

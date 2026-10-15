@@ -20,20 +20,33 @@ type Props = {
   /** Saldo pendiente en precio base (efectivo/transferencia). */
   saldoPendiente: number;
   cuentaCorrienteHabilitada: boolean;
-  recargoPct: number;
+  recargoCreditoPct: number;
+  recargoDebitoPct: number;
 };
 
 const redondear = (n: number) => Math.round(n * 100) / 100;
 const esTarjeta = (m: MedioPagoValue) => m === "TARJETA_CREDITO" || m === "TARJETA_DEBITO";
 
-export function CobrarTrabajoForm({ id, saldoPendiente, cuentaCorrienteHabilitada, recargoPct }: Props) {
+export function CobrarTrabajoForm({
+  id,
+  saldoPendiente,
+  cuentaCorrienteHabilitada,
+  recargoCreditoPct,
+  recargoDebitoPct,
+}: Props) {
   const router = useRouter();
-  const factor = 1 + recargoPct / 100;
+
+  /** Factor del recargo según el medio: crédito, débito o 1 (sin recargo). */
+  function factorDe(metodo: MedioPagoValue): number {
+    if (metodo === "TARJETA_CREDITO") return 1 + recargoCreditoPct / 100;
+    if (metodo === "TARJETA_DEBITO") return 1 + recargoDebitoPct / 100;
+    return 1;
+  }
 
   /** Cuánto del precio base cubre un pago: con tarjeta, cada peso cubre 1/(1+recargo). */
   function cubierto(it: PagoItem): number {
     const monto = Number(it.monto) || 0;
-    return esTarjeta(it.metodo) ? redondear(monto / factor) : monto;
+    return esTarjeta(it.metodo) ? redondear(monto / factorDe(it.metodo)) : monto;
   }
 
   /** Monto que hay que cargar en el pago `index`, con `metodo`, para cubrir lo que falta. */
@@ -41,7 +54,7 @@ export function CobrarTrabajoForm({ id, saldoPendiente, cuentaCorrienteHabilitad
     const otros = lista.reduce((acc, it, i) => (i === index ? acc : acc + cubierto(it)), 0);
     const resto = redondear(saldoPendiente - otros);
     if (resto <= 0) return 0;
-    return esTarjeta(metodo) ? redondear(resto * factor) : resto;
+    return esTarjeta(metodo) ? redondear(resto * factorDe(metodo)) : resto;
   }
 
   const [items, setItems] = useState<PagoItem[]>([
@@ -140,8 +153,12 @@ export function CobrarTrabajoForm({ id, saldoPendiente, cuentaCorrienteHabilitad
           <span className="font-medium">{formatearPesos(saldoPendiente)}</span>
         </p>
         <p className="text-neutral-700">
-          Saldo pendiente con tarjeta (+{recargoPct}%):{" "}
-          <span className="font-medium">{formatearPesos(precioTarjeta(saldoPendiente, recargoPct))}</span>
+          Saldo pendiente con débito (+{recargoDebitoPct}%):{" "}
+          <span className="font-medium">{formatearPesos(precioTarjeta(saldoPendiente, recargoDebitoPct))}</span>
+        </p>
+        <p className="text-neutral-700">
+          Saldo pendiente con crédito (+{recargoCreditoPct}%):{" "}
+          <span className="font-medium">{formatearPesos(precioTarjeta(saldoPendiente, recargoCreditoPct))}</span>
         </p>
         <p className="text-xs text-neutral-500">
           Podés combinar medios: lo que se paga con tarjeta cubre menos del saldo porque incluye el recargo.

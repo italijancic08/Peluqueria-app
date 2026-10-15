@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { obtenerDisponibilidad } from "@/actions/appointments";
-import { Input } from "@/components/ui/input";
+import { SelectorFechaTira } from "./selector-fecha-tira";
 import { cn } from "@/lib/utils";
 import { hoyISO, mostrarHora } from "@/lib/dates";
 
@@ -45,14 +45,9 @@ export function TurnoScheduler({ servicioIds, variantes, value, onChange }: Prop
 
   return (
     <div className="space-y-3">
-      <div className="space-y-1 max-w-xs">
+      <div className="space-y-1">
         <label className="text-sm font-medium text-[#4A3428]">Fecha</label>
-        <Input
-          type="date"
-          value={fecha}
-          min={hoyISO()}
-          onChange={(e) => setFecha(e.target.value)}
-        />
+        <SelectorFechaTira value={fecha} onChange={setFecha} />
       </div>
 
       {servicioIds.length === 0 && (
@@ -67,7 +62,7 @@ export function TurnoScheduler({ servicioIds, variantes, value, onChange }: Prop
       )}
 
       {slots.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {slots.map((slot) => {
             const seleccionado = value === slot.horaISO;
             return (
@@ -77,18 +72,13 @@ export function TurnoScheduler({ servicioIds, variantes, value, onChange }: Prop
                 disabled={!slot.disponible}
                 onClick={() => slot.disponible && onChange(slot.horaISO)}
                 className={cn(
-                  "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors border",
-                  slot.disponible &&
-                    !seleccionado &&
-                    "bg-[#F3E5D6] text-[#4A3428] border-[#EDD9C4] hover:bg-[#E8C7A6] cursor-pointer",
-                  slot.disponible &&
-                    seleccionado &&
-                    "bg-[#6B4635] text-white border-[#6B4635] cursor-pointer",
-                  !slot.disponible &&
-                    "bg-[#F3E5D6]/50 text-[#C4B6A8] border-[#EDD9C4] cursor-not-allowed line-through"
+                  "rounded-lg py-2 text-sm font-medium text-center transition-colors",
+                  slot.disponible && !seleccionado && "bg-[#F3E5D6] text-[#4A3428] hover:bg-[#E8C7A6]",
+                  slot.disponible && seleccionado && "bg-[#6B4635] text-white",
+                  !slot.disponible && "bg-[#F3E5D6]/50 text-[#C4B6A8] cursor-not-allowed"
                 )}
               >
-                {mostrarHora(slot.horaISO)}
+                {slot.disponible ? mostrarHora(slot.horaISO) : "Ocupado"}
               </button>
             );
           })}
