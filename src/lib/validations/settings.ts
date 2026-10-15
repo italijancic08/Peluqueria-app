@@ -22,8 +22,8 @@ export const businessHoursSchema = z.object({
       id: z.string().uuid(),
       dia_semana: z.number().int().min(0).max(6),
       activo: z.boolean(),
-      hora_apertura: horaSchema,
-      hora_cierre: horaSchema,
+      hora_apertura: horaSchema.nullable(),
+      hora_cierre: horaSchema.nullable(),
       hora_apertura_2: horaSchema.nullable(),
       hora_cierre_2: horaSchema.nullable(),
     })

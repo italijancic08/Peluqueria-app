@@ -27,6 +27,8 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
         id: h.id,
         dia_semana: h.dia_semana,
         activo: h.activo,
+        manana_activa: Boolean(h.hora_apertura && h.hora_cierre),
+        tarde_activa: Boolean(h.hora_apertura_2 && h.hora_cierre_2),
         hora_apertura: recortar(h.hora_apertura),
         hora_cierre: recortar(h.hora_cierre),
         hora_apertura_2: recortar(h.hora_apertura_2),
@@ -41,11 +43,26 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
     setHorarios(horarios.map((h, i) => (i === index ? { ...h, [campo]: valor } : h)));
   }
 
-  function quitarTarde(index: number) {
+  // Al activar un turno vacío se sugieren horarios típicos para no empezar de cero
+  function alternarTurno(index: number, turno: "manana" | "tarde", activo: boolean) {
     setHorarios(
-      horarios.map((h, i) =>
-        i === index ? { ...h, hora_apertura_2: "", hora_cierre_2: "" } : h
-      )
+      horarios.map((h, i) => {
+        if (i !== index) return h;
+        if (turno === "manana") {
+          return {
+            ...h,
+            manana_activa: activo,
+            hora_apertura: activo && !h.hora_apertura ? "09:00" : h.hora_apertura,
+            hora_cierre: activo && !h.hora_cierre ? "13:00" : h.hora_cierre,
+          };
+        }
+        return {
+          ...h,
+          tarde_activa: activo,
+          hora_apertura_2: activo && !h.hora_apertura_2 ? "16:00" : h.hora_apertura_2,
+          hora_cierre_2: activo && !h.hora_cierre_2 ? "20:00" : h.hora_cierre_2,
+        };
+      })
     );
   }
 
@@ -60,10 +77,10 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
         id: h.id,
         dia_semana: h.dia_semana,
         activo: h.activo,
-        hora_apertura: `${h.hora_apertura}:00`,
-        hora_cierre: `${h.hora_cierre}:00`,
-        hora_apertura_2: completar(h.hora_apertura_2),
-        hora_cierre_2: completar(h.hora_cierre_2),
+        hora_apertura: h.manana_activa ? completar(h.hora_apertura) : null,
+        hora_cierre: h.manana_activa ? completar(h.hora_cierre) : null,
+        hora_apertura_2: h.tarde_activa ? completar(h.hora_apertura_2) : null,
+        hora_cierre_2: h.tarde_activa ? completar(h.hora_cierre_2) : null,
       })),
     });
     setEnviando(false);
@@ -105,12 +122,20 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
             </label>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-14 text-xs text-neutral-500">Mañana</span>
+              <label className="flex w-24 items-center gap-1.5 text-xs text-neutral-600">
+                <input
+                  type="checkbox"
+                  checked={h.manana_activa}
+                  disabled={!h.activo}
+                  onChange={(e) => alternarTurno(index, "manana", e.target.checked)}
+                />
+                Mañana
+              </label>
               <input
                 type="time"
                 className={claseHora}
                 value={h.hora_apertura}
-                disabled={!h.activo}
+                disabled={!h.activo || !h.manana_activa}
                 onChange={(e) => actualizarDia(index, "hora_apertura", e.target.value)}
               />
               <span className="text-neutral-400 text-sm">a</span>
@@ -118,18 +143,26 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
                 type="time"
                 className={claseHora}
                 value={h.hora_cierre}
-                disabled={!h.activo}
+                disabled={!h.activo || !h.manana_activa}
                 onChange={(e) => actualizarDia(index, "hora_cierre", e.target.value)}
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-14 text-xs text-neutral-500">Tarde</span>
+              <label className="flex w-24 items-center gap-1.5 text-xs text-neutral-600">
+                <input
+                  type="checkbox"
+                  checked={h.tarde_activa}
+                  disabled={!h.activo}
+                  onChange={(e) => alternarTurno(index, "tarde", e.target.checked)}
+                />
+                Tarde
+              </label>
               <input
                 type="time"
                 className={claseHora}
                 value={h.hora_apertura_2}
-                disabled={!h.activo}
+                disabled={!h.activo || !h.tarde_activa}
                 onChange={(e) => actualizarDia(index, "hora_apertura_2", e.target.value)}
               />
               <span className="text-neutral-400 text-sm">a</span>
@@ -137,19 +170,16 @@ export function BusinessHoursForm({ horarios: horariosIniciales }: Props) {
                 type="time"
                 className={claseHora}
                 value={h.hora_cierre_2}
-                disabled={!h.activo}
+                disabled={!h.activo || !h.tarde_activa}
                 onChange={(e) => actualizarDia(index, "hora_cierre_2", e.target.value)}
               />
-              {h.activo && (h.hora_apertura_2 || h.hora_cierre_2) && (
-                <button
-                  type="button"
-                  onClick={() => quitarTarde(index)}
-                  className="text-xs text-neutral-500 underline"
-                >
-                  Quitar tarde
-                </button>
-              )}
             </div>
+
+            {h.activo && !h.manana_activa && !h.tarde_activa && (
+              <p className="text-xs text-red-600">
+                Activá al menos un turno, o desmarcá el día.
+              </p>
+            )}
           </div>
         ))}
       </div>

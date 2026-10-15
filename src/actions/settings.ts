@@ -54,23 +54,42 @@ export async function actualizarHorarios(valores: unknown): Promise<ActionResult
   for (const h of parsed.data.horarios) {
     const dia = DIAS_SEMANA[h.dia_semana];
 
-    if (h.hora_cierre <= h.hora_apertura) {
-      return { ok: false, error: `${dia}: la mañana tiene que cerrar después de abrir.` };
-    }
+    const hayManana = h.hora_apertura !== null || h.hora_cierre !== null;
+    const hayTarde = h.hora_apertura_2 !== null || h.hora_cierre_2 !== null;
 
-    // La tarde es opcional: o se cargan los dos horarios o ninguno
-    if (h.hora_apertura_2 === null && h.hora_cierre_2 === null) continue;
-
-    if (h.hora_apertura_2 === null || h.hora_cierre_2 === null) {
+    // Cada turno es opcional: o se cargan los dos horarios o ninguno
+    if (hayManana && (h.hora_apertura === null || h.hora_cierre === null)) {
       return {
         ok: false,
-        error: `${dia}: completá apertura y cierre de la tarde, o dejá los dos vacíos.`,
+        error: `${dia}: completá apertura y cierre de la mañana, o desactivá el turno.`,
       };
     }
-    if (h.hora_cierre_2 <= h.hora_apertura_2) {
+    if (hayTarde && (h.hora_apertura_2 === null || h.hora_cierre_2 === null)) {
+      return {
+        ok: false,
+        error: `${dia}: completá apertura y cierre de la tarde, o desactivá el turno.`,
+      };
+    }
+
+    // Un día abierto necesita al menos un turno
+    if (h.activo && !hayManana && !hayTarde) {
+      return {
+        ok: false,
+        error: `${dia}: activá la mañana, la tarde o ambas, o desmarcá el día.`,
+      };
+    }
+
+    if (h.hora_apertura !== null && h.hora_cierre !== null && h.hora_cierre <= h.hora_apertura) {
+      return { ok: false, error: `${dia}: la mañana tiene que cerrar después de abrir.` };
+    }
+    if (
+      h.hora_apertura_2 !== null &&
+      h.hora_cierre_2 !== null &&
+      h.hora_cierre_2 <= h.hora_apertura_2
+    ) {
       return { ok: false, error: `${dia}: la tarde tiene que cerrar después de abrir.` };
     }
-    if (h.hora_apertura_2 <= h.hora_cierre) {
+    if (h.hora_cierre !== null && h.hora_apertura_2 !== null && h.hora_apertura_2 <= h.hora_cierre) {
       return {
         ok: false,
         error: `${dia}: la tarde tiene que abrir después del cierre de la mañana.`,

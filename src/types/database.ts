@@ -432,9 +432,9 @@ export type Database = {
           activo: boolean
           created_at: string
           dia_semana: number
-          hora_apertura: string
+          hora_apertura: string | null
           hora_apertura_2: string | null
-          hora_cierre: string
+          hora_cierre: string | null
           hora_cierre_2: string | null
           id: string
           updated_at: string
@@ -443,9 +443,9 @@ export type Database = {
           activo?: boolean
           created_at?: string
           dia_semana: number
-          hora_apertura: string
+          hora_apertura?: string | null
           hora_apertura_2?: string | null
-          hora_cierre: string
+          hora_cierre?: string | null
           hora_cierre_2?: string | null
           id?: string
           updated_at?: string
@@ -454,9 +454,9 @@ export type Database = {
           activo?: boolean
           created_at?: string
           dia_semana?: number
-          hora_apertura?: string
+          hora_apertura?: string | null
           hora_apertura_2?: string | null
-          hora_cierre?: string
+          hora_cierre?: string | null
           hora_cierre_2?: string | null
           id?: string
           updated_at?: string
