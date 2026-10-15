@@ -17,6 +17,8 @@ interface CalcularSlotsParams {
   servicios: ServicioConCupo[];
   turnosOcupados: RangoTurnoOcupado[];
   bloqueos: RangoBloqueado[];
+  /** Hora máxima de fin de un turno en la última franja ("HH:mm"). null = sin límite. */
+  limiteTrabajo?: string | null;
 }
 
 function seSuperponen(aIni: Date, aFin: Date, bIni: Date, bFin: Date): boolean {
@@ -28,13 +30,14 @@ function seSuperponen(aIni: Date, aFin: Date, bIni: Date, bFin: Date): boolean {
  * Si el día tiene dos franjas (mañana y tarde), los horarios de ambas van en orden y
  * un turno nunca puede cruzar el descanso del mediodía.
  *
- * En la ÚLTIMA franja del día (la que cierra el local) un turno puede empezar en cualquier
- * horario con el local abierto, aunque termine después del cierre (servicios largos).
+ * En la ÚLTIMA franja del día (la que cierra el local) un turno tiene que EMPEZAR antes del
+ * cierre y puede terminar después (servicios largos), pero nunca más tarde de `limiteTrabajo`.
  */
 export function calcularSlotsDelDia(params: CalcularSlotsParams): SlotConEstado[] {
   const {
     fechaISO, duracionMin, franjas,
     intervaloMin, capacidad, servicios, turnosOcupados, bloqueos,
+    limiteTrabajo,
   } = params;
 
   const slots: SlotConEstado[] = [];
@@ -45,13 +48,23 @@ export function calcularSlotsDelDia(params: CalcularSlotsParams): SlotConEstado[
     const apertura = aUTC(new Date(`${fechaISO}T${franja.apertura}`));
     const cierre = aUTC(new Date(`${fechaISO}T${franja.cierre}`));
 
+    // Hora límite de fin de turno (solo aplica a la última franja del día).
+    let limite: Date | null = null;
+    if (esUltimaFranja && limiteTrabajo) {
+      limite = aUTC(new Date(`${fechaISO}T${limiteTrabajo}`));
+      // Anterior al cierre (ej. 01:00): es de madrugada, o sea del día siguiente.
+      if (isBefore(limite, cierre)) limite = addMinutes(limite, 24 * 60);
+    }
+
     let candidato = apertura;
 
     while (true) {
       const finCandidato = addMinutes(candidato, duracionMin);
       if (esUltimaFranja) {
-        // Última franja: alcanza con que el turno EMPIECE antes del cierre.
+        // Última franja: el turno tiene que EMPEZAR antes del cierre...
         if (!isBefore(candidato, cierre)) break;
+        // ...y, si hay hora límite, TERMINAR como máximo a esa hora.
+        if (limite && isBefore(limite, finCandidato)) break;
       } else if (isBefore(cierre, finCandidato)) {
         // Franjas intermedias: el turno no puede pasarse del descanso.
         break;

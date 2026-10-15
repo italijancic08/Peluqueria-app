@@ -33,6 +33,7 @@ export async function actualizarConfiguracion(valores: unknown): Promise<ActionR
       turnos_expiran: parsed.data.turnos_expiran,
       expiracion_turno_min: parsed.data.expiracion_turno_min,
       aviso_sin_tomar_min: parsed.data.aviso_sin_tomar_min,
+      hora_limite_trabajo: parsed.data.hora_limite_trabajo,
     })
     .eq("id", 1);
 

@@ -471,6 +471,7 @@ export type Database = {
           comision_default_pct: number
           created_at: string
           expiracion_turno_min: number
+          hora_limite_trabajo: string | null
           id: number
           intervalo_turnos_min: number
           nombre_negocio: string
@@ -486,6 +487,7 @@ export type Database = {
           comision_default_pct?: number
           created_at?: string
           expiracion_turno_min?: number
+          hora_limite_trabajo?: string | null
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string
@@ -501,6 +503,7 @@ export type Database = {
           comision_default_pct?: number
           created_at?: string
           expiracion_turno_min?: number
+          hora_limite_trabajo?: string | null
           id?: number
           intervalo_turnos_min?: number
           nombre_negocio?: string

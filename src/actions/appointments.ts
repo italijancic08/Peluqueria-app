@@ -55,6 +55,7 @@ export async function obtenerDisponibilidad(
     duracionMin,
     franjas: franjasDelHorario(horario),
     intervaloMin: settings.intervalo_turnos_min,
+    limiteTrabajo: settings.hora_limite_trabajo,
     capacidad: settings.capacidad_simultanea,
     servicios: servicios.map((s) => ({ id: s.id, cupoMaximo: s.cupo_maximo })),
     turnosOcupados: (ocupados ?? []).map((o) => ({

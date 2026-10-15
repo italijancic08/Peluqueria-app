@@ -31,6 +31,7 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
       turnos_expiran: settings.turnos_expiran,
       expiracion_turno_min: settings.expiracion_turno_min,
       aviso_sin_tomar_min: settings.aviso_sin_tomar_min,
+      hora_limite_trabajo: settings.hora_limite_trabajo?.slice(0, 5) ?? "",
     },
   });
 
@@ -145,6 +146,25 @@ export function BusinessSettingsForm({ settings }: { settings: BusinessSettings 
             <p className="text-xs text-red-600">{errors.intervalo_turnos_min.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-1 max-w-xs">
+        <label className="text-sm font-medium text-neutral-700">
+          Hora límite de trabajo
+        </label>
+        <Input
+          type="time"
+          {...register("hora_limite_trabajo", { setValueAs: (v) => (v ? v : null) })}
+        />
+        <p className="text-xs text-neutral-500">
+          Hora máxima hasta la que se puede extender un turno pasado el cierre del local. Los
+          servicios largos solo se ofrecen si terminan a más tardar a esta hora. Si es anterior al
+          cierre (por ejemplo 01:00), se toma como de la madrugada del día siguiente. Dejalo vacío
+          para no poner límite.
+        </p>
+        {errors.hora_limite_trabajo && (
+          <p className="text-xs text-red-600">{errors.hora_limite_trabajo.message}</p>
+        )}
       </div>
 
       <div className="space-y-3 rounded-lg border border-[#EDD9C4] p-4">
