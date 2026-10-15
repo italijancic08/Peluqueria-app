@@ -19,6 +19,7 @@ export const turnoInternoSchema = z.object({
   variantes: z.record(z.string(), z.string()).default({}),
   fechaHoraInicio: z.string().min(1, "Elegí un horario"),
   asignarme: z.boolean().default(false),
+  profileId: z.string().uuid().optional().nullable(),
   comentario: z.string().trim().max(500).optional().or(z.literal("")),
   budgetId: z.string().uuid().optional().nullable(),
 });

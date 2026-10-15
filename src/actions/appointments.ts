@@ -267,9 +267,27 @@ export async function crearTurnoInterno(
     };
   }
 
-  const { clientId, servicioIds, variantes, fechaHoraInicio, asignarme, comentario, budgetId } =
-    parsed.data;
+  const {
+    clientId, servicioIds, variantes, fechaHoraInicio,
+    asignarme, profileId, comentario, budgetId,
+  } = parsed.data;
   const supabase = await createClient();
+
+  // Quién queda asignado: el administrador puede elegir a cualquier empleado activo;
+  // el resto solo puede asignarse a sí mismo.
+  let asignadoId: string | null = asignarme ? perfil.id : null;
+  if (perfil.rol === "ADMIN" && profileId) {
+    const { data: empleado } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", profileId)
+      .eq("activo", true)
+      .maybeSingle();
+    if (!empleado) {
+      return { ok: false, error: "El empleado elegido no existe o está inactivo." };
+    }
+    asignadoId = empleado.id;
+  }
 
   const seleccion = await resolverServicios(supabase, servicioIds, variantes);
   if (!seleccion.ok) return { ok: false, error: seleccion.error };
@@ -287,7 +305,7 @@ export async function crearTurnoInterno(
     .from("appointments")
     .insert({
       client_id: clientId,
-      profile_id: asignarme ? perfil.id : null,
+      profile_id: asignadoId,
       fecha_hora_inicio: inicio.toISOString(),
       fecha_hora_fin: fin.toISOString(),
       duracion_min: duracionTotal,
@@ -301,7 +319,13 @@ export async function crearTurnoInterno(
 
   if (errorTurno || !turno) {
     if (errorTurno?.code === "23P01") {
-      return { ok: false, error: "Ya tenés un turno en ese horario." };
+      return {
+        ok: false,
+        error:
+          asignadoId && asignadoId !== perfil.id
+            ? "Ese empleado ya tiene un turno en ese horario."
+            : "Ya tenés un turno en ese horario.",
+      };
     }
     return { ok: false, error: "No se pudo crear el turno." };
   }
@@ -329,8 +353,8 @@ export async function crearTurnoInterno(
       appointment_id: turno.id,
       budget_id: budgetId || null,
       total: totalTrabajo,
-      ...(asignarme
-        ? { profile_id: perfil.id, estado: "TOMADO", fecha_inicio: new Date().toISOString() }
+      ...(asignadoId
+        ? { profile_id: asignadoId, estado: "TOMADO", fecha_inicio: new Date().toISOString() }
         : {}),
     })
     .select("id")
