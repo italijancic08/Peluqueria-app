@@ -12,7 +12,13 @@ import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { SelectorNuevoHorario } from "./selector-nuevo-horario";
 
-export function ReprogramarTurnoButton({ id }: { id: string }) {
+export function ReprogramarTurnoButton({
+  id,
+  sinEmail = false,
+}: {
+  id: string;
+  sinEmail?: boolean;
+}) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [slot, setSlot] = useState<string | null>(null);
@@ -53,10 +59,17 @@ export function ReprogramarTurnoButton({ id }: { id: string }) {
 
       <Modal abierto={abierto} onCerrar={cerrar} titulo="Reprogramar turno">
         <div className="space-y-4">
-          <p className="text-sm text-[#9C8577]">
-            Elegí el nuevo horario. El cliente recibirá la propuesta y tendrá que aceptarla o
-            rechazarla; hasta entonces el turno se mantiene como está.
-          </p>
+          {sinEmail ? (
+            <p className="rounded-lg border border-[#E8D8A8] bg-[#FBF4DC] px-3 py-2 text-sm text-[#7A5C14]">
+              Este cliente no tiene email cargado, así que el turno se va a mover de inmediato,
+              sin esperar su respuesta. Avisale por teléfono o WhatsApp.
+            </p>
+          ) : (
+            <p className="text-sm text-[#9C8577]">
+              Elegí el nuevo horario. El cliente recibirá la propuesta y tendrá que aceptarla o
+              rechazarla; hasta entonces el turno se mantiene como está.
+            </p>
+          )}
 
           <SelectorNuevoHorario
             cargarSlots={(fecha) => slotsParaTurno(id, fecha)}
@@ -83,7 +96,13 @@ export function ReprogramarTurnoButton({ id }: { id: string }) {
               Volver
             </Button>
             <Button onClick={enviar} disabled={isPending || !slot}>
-              {isPending ? "Enviando..." : "Proponer horario"}
+              {isPending
+                ? sinEmail
+                  ? "Reprogramando..."
+                  : "Enviando..."
+                : sinEmail
+                  ? "Reprogramar turno"
+                  : "Proponer horario"}
             </Button>
           </div>
         </div>

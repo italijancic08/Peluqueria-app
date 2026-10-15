@@ -190,6 +190,122 @@ export async function crearSolicitud(
 }
 
 // ---------------------------------------------------------------------
+// Reprogramar directo (clientes sin email)
+// ---------------------------------------------------------------------
+
+/**
+ * ¿El cliente del turno tiene un email al que avisarle?
+ * Si no lo tiene, nunca va a ver una propuesta ni va a poder responderla.
+ */
+export async function clienteTieneEmail(cliente: Cliente, turnoId: string): Promise<boolean> {
+  const { data } = await cliente
+    .from("appointments")
+    .select("clients ( email )")
+    .eq("id", turnoId)
+    .maybeSingle();
+
+  return Boolean(uno(data?.clients)?.email?.trim());
+}
+
+/**
+ * El staff mueve el turno sin esperar respuesta del cliente.
+ * Se usa solo cuando el cliente no tiene email. Deja el cambio en el historial
+ * de reprogramaciones como ACEPTADA.
+ */
+export async function reprogramarTurnoDirecto(
+  cliente: Cliente,
+  p: { turnoId: string; profileId: string; fechaHoraInicio: string; motivo?: string }
+): Promise<ActionResult> {
+  const { data: turno } = await cliente
+    .from("appointments")
+    .select(
+      "id, numero, estado, fecha_hora_inicio, duracion_min, appointment_services(service_id), works(estado)"
+    )
+    .eq("id", p.turnoId)
+    .maybeSingle();
+
+  if (!turno) return { ok: false, error: "No encontramos el turno." };
+
+  const modificable = turnoModificable(turno.estado, uno(turno.works)?.estado);
+  if (!modificable.ok) {
+    return { ok: false, error: modificable.razon ?? "Este turno no se puede modificar." };
+  }
+
+  const inicio = new Date(p.fechaHoraInicio);
+  if (Number.isNaN(inicio.getTime())) {
+    return { ok: false, error: "El horario elegido no es válido." };
+  }
+  if (inicio.getTime() === new Date(turno.fecha_hora_inicio).getTime()) {
+    return { ok: false, error: "Elegí un horario distinto al actual." };
+  }
+
+  const disponible = await horarioDisponible(
+    cliente,
+    {
+      servicioIds: (turno.appointment_services ?? []).map((s) => s.service_id),
+      duracionMin: turno.duracion_min,
+      excluirTurnoId: turno.id,
+    },
+    inicio.toISOString()
+  );
+  if (!disponible.ok) return disponible;
+
+  const fin = new Date(inicio.getTime() + turno.duracion_min * 60000);
+
+  // 1) Se mueve el turno.
+  const { data: movido, error: errorTurno } = await cliente
+    .from("appointments")
+    .update({
+      fecha_hora_inicio: inicio.toISOString(),
+      fecha_hora_fin: fin.toISOString(),
+    })
+    .eq("id", turno.id)
+    .eq("estado", "CONFIRMADO")
+    .select("id")
+    .maybeSingle();
+
+  if (errorTurno || !movido) {
+    return {
+      ok: false,
+      error:
+        errorTurno?.code === "23P01"
+          ? "El empleado asignado ya tiene otro turno en ese horario."
+          : "No se pudo reprogramar el turno.",
+    };
+  }
+
+  const ahora = new Date().toISOString();
+
+  // 2) Si había un pedido pendiente, queda sin efecto.
+  await cliente
+    .from("appointment_reschedules")
+    .update({ estado: "RETIRADA", respondido_at: ahora })
+    .eq("appointment_id", turno.id)
+    .eq("estado", "PENDIENTE");
+
+  // 3) Constancia en el historial (si falla, el turno ya se movió: solo se registra el error).
+  const { error: errorHistorial } = await cliente.from("appointment_reschedules").insert({
+    appointment_id: turno.id,
+    solicitado_por: "STAFF",
+    solicitado_por_profile_id: p.profileId,
+    fecha_hora_inicio_anterior: turno.fecha_hora_inicio,
+    fecha_hora_inicio_propuesta: inicio.toISOString(),
+    fecha_hora_fin_propuesta: fin.toISOString(),
+    motivo: limpiar(p.motivo),
+    estado: "ACEPTADA",
+    respondido_por: "STAFF",
+    respondido_por_profile_id: p.profileId,
+    respuesta_motivo: "Reprogramado directamente: el cliente no tiene email cargado.",
+    respondido_at: ahora,
+  });
+  if (errorHistorial) {
+    console.error("[reprogramacion] No se pudo guardar el historial:", errorHistorial.message);
+  }
+
+  return { ok: true, data: undefined };
+}
+
+// ---------------------------------------------------------------------
 // Aceptar / rechazar
 // ---------------------------------------------------------------------
 

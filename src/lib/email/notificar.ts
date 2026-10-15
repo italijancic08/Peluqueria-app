@@ -324,6 +324,7 @@ export function enviarEmailTurnoCancelado(
   return enviarEventoDeTurno({
     tipo: "TURNO_CANCELADO",
     turnoId,
+    omitirSinEmail: true,
     armar: (t, negocio) =>
       plantillaTurnoCancelado({ ...datosTurno(t, negocio), ...p }),
   });
@@ -371,6 +372,7 @@ export function enviarEmailReprogramacionConfirmada(
   return enviarEventoDeTurno({
     tipo: "REPROGRAMACION_CONFIRMADA",
     turnoId,
+    omitirSinEmail: true,
     armar: (t, negocio) =>
       plantillaReprogramacionConfirmada({ ...datosTurno(t, negocio), ...p }),
   });

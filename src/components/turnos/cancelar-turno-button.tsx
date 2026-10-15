@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 
-export function CancelarTurnoButton({ id }: { id: string }) {
+export function CancelarTurnoButton({
+  id,
+  sinEmail = false,
+}: {
+  id: string;
+  sinEmail?: boolean;
+}) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -41,9 +47,16 @@ export function CancelarTurnoButton({ id }: { id: string }) {
 
       <Modal abierto={abierto} onCerrar={cerrar} titulo="Cancelar turno">
         <div className="space-y-4">
-          <p className="text-sm text-[#9C8577]">
-            Se va a cancelar el turno y el cliente será avisado. Podés indicar el motivo.
-          </p>
+          {sinEmail ? (
+            <p className="rounded-lg border border-[#E8D8A8] bg-[#FBF4DC] px-3 py-2 text-sm text-[#7A5C14]">
+              Se va a cancelar el turno. Este cliente no tiene email cargado, así que no recibirá
+              ningún aviso: avisale por teléfono o WhatsApp. Podés indicar el motivo.
+            </p>
+          ) : (
+            <p className="text-sm text-[#9C8577]">
+              Se va a cancelar el turno y el cliente será avisado. Podés indicar el motivo.
+            </p>
+          )}
 
           {error && (
             <div className="rounded-lg border border-[#E8C9B8] bg-[#F7E9E2] px-3 py-2 text-sm text-[#B1543A]">

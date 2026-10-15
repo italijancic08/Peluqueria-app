@@ -40,7 +40,7 @@ export default async function TurnosPage({
   const { data: turnos, error } = await supabase
     .from("appointments")
     .select(
-      "*, clients(nombre, apellido, telefono), works(estado, profile_id, profiles(nombre, apellido)), appointment_reschedules(id, estado, solicitado_por)"
+      "*, clients(nombre, apellido, telefono, email), works(estado, profile_id, profiles(nombre, apellido)), appointment_reschedules(id, estado, solicitado_por)"
     )
     .gte("fecha_hora_inicio", `${fechaConsulta}T00:00:00`)
     .lt("fecha_hora_inicio", `${fechaConsulta}T23:59:59`)
@@ -123,6 +123,7 @@ export default async function TurnosPage({
                   : "Sin asignar";
               const pendiente =
                 (t.appointment_reschedules ?? []).find((r) => r.estado === "PENDIENTE") ?? null;
+              const sinEmail = !t.clients?.email?.trim();
 
               return (
                 <Tr key={t.id}>
@@ -156,12 +157,14 @@ export default async function TurnosPage({
                   <Td className="text-right">
                     <div className="flex flex-wrap items-center justify-end gap-1">
                       {vista.puedeCancelar && !pendiente && (
-                        <ReprogramarTurnoButton id={t.id} />
+                        <ReprogramarTurnoButton id={t.id} sinEmail={sinEmail} />
                       )}
                       {pendiente?.solicitado_por === "STAFF" && (
                         <RetirarPropuestaButton solicitudId={pendiente.id} />
                       )}
-                      {vista.puedeCancelar && <CancelarTurnoButton id={t.id} />}
+                      {vista.puedeCancelar && (
+                        <CancelarTurnoButton id={t.id} sinEmail={sinEmail} />
+                      )}
                     </div>
                   </Td>
                 </Tr>

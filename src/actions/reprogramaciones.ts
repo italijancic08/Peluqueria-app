@@ -8,7 +8,9 @@ import { cargarTurnoPorToken } from "@/lib/turnos/gestion";
 import { slotsDeTurno, type SlotDisponible } from "@/lib/turnos/slots";
 import {
   cancelarTurnoComun,
+  clienteTieneEmail,
   crearSolicitud,
+  reprogramarTurnoDirecto,
   responderSolicitud,
   retirarSolicitud,
 } from "@/lib/turnos/operaciones";
@@ -169,12 +171,16 @@ export async function slotsParaTurno(
   return slotsDeTurno(supabase, id.data, f.data);
 }
 
-/** El staff propone un nuevo horario: el cliente tiene que aceptarlo o rechazarlo. */
+/**
+ * El staff cambia el horario de un turno.
+ * - Cliente con email: se le propone y tiene que aceptarlo o rechazarlo.
+ * - Cliente sin email: se reprograma directo (no hay forma de avisarle ni de que responda).
+ */
 export async function proponerReprogramacion(
   turnoId: string,
   fechaHoraInicio: string,
   motivo?: string
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ directa: boolean }>> {
   const perfil = await checkAuth();
   if (!perfil) return { ok: false, error: "No autorizado." };
 
@@ -186,14 +192,28 @@ export async function proponerReprogramacion(
   if (!m.success) return { ok: false, error: ERROR_MOTIVO };
 
   const supabase = await createClient();
+
+  if (!(await clienteTieneEmail(supabase, id.data))) {
+    const directa = await reprogramarTurnoDirecto(supabase, {
+      turnoId: id.data,
+      profileId: perfil.id,
+      fechaHoraInicio: h.data,
+      motivo: m.data,
+    });
+    if (!directa.ok) return directa;
+    refrescarStaff();
+    return { ok: true, data: { directa: true } };
+  }
+
   const res = await crearSolicitud(supabase, {
     turnoId: id.data,
     actor: { tipo: "STAFF", profileId: perfil.id },
     fechaHoraInicio: h.data,
     motivo: m.data,
   });
-  if (res.ok) refrescarStaff();
-  return res;
+  if (!res.ok) return res;
+  refrescarStaff();
+  return { ok: true, data: { directa: false } };
 }
 
 /** El staff acepta o rechaza el pedido de reprogramación de un cliente. */
