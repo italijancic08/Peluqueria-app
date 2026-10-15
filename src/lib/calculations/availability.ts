@@ -27,6 +27,9 @@ function seSuperponen(aIni: Date, aFin: Date, bIni: Date, bFin: Date): boolean {
  * Devuelve TODOS los horarios del día (abierto), cada uno marcado como disponible u ocupado.
  * Si el día tiene dos franjas (mañana y tarde), los horarios de ambas van en orden y
  * un turno nunca puede cruzar el descanso del mediodía.
+ *
+ * En la ÚLTIMA franja del día (la que cierra el local) un turno puede empezar en cualquier
+ * horario con el local abierto, aunque termine después del cierre (servicios largos).
  */
 export function calcularSlotsDelDia(params: CalcularSlotsParams): SlotConEstado[] {
   const {
@@ -36,7 +39,9 @@ export function calcularSlotsDelDia(params: CalcularSlotsParams): SlotConEstado[
 
   const slots: SlotConEstado[] = [];
 
-  for (const franja of franjas) {
+  for (let i = 0; i < franjas.length; i++) {
+    const franja = franjas[i];
+    const esUltimaFranja = i === franjas.length - 1;
     const apertura = aUTC(new Date(`${fechaISO}T${franja.apertura}`));
     const cierre = aUTC(new Date(`${fechaISO}T${franja.cierre}`));
 
@@ -44,7 +49,13 @@ export function calcularSlotsDelDia(params: CalcularSlotsParams): SlotConEstado[
 
     while (true) {
       const finCandidato = addMinutes(candidato, duracionMin);
-      if (isBefore(cierre, finCandidato)) break;
+      if (esUltimaFranja) {
+        // Última franja: alcanza con que el turno EMPIECE antes del cierre.
+        if (!isBefore(candidato, cierre)) break;
+      } else if (isBefore(cierre, finCandidato)) {
+        // Franjas intermedias: el turno no puede pasarse del descanso.
+        break;
+      }
 
       const bloqueado = bloqueos.some((b) =>
         seSuperponen(candidato, finCandidato, b.inicio, b.fin)
