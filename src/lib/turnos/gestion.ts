@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { nombreServicio } from "@/lib/seleccion";
 
 const TOKEN_RE = /^[a-f0-9]{64}$/;
 const ESTADOS_TRABAJO_EN_MARCHA = ["EN_CURSO", "FINALIZADO", "COBRADO"];
@@ -90,7 +91,7 @@ export async function cargarTurnoPorToken(token: string): Promise<TurnoGestion |
       `id, numero, estado, fecha_hora_inicio, fecha_hora_fin, duracion_min,
        cancelado_por, motivo_cancelacion,
        clients ( nombre ),
-       appointment_services ( service_id, services ( nombre ) ),
+       appointment_services ( service_id, variante_nombre, services ( nombre ) ),
        works ( estado ),
        appointment_reschedules (
          id, estado, solicitado_por, fecha_hora_inicio_propuesta,
@@ -118,7 +119,10 @@ export async function cargarTurnoPorToken(token: string): Promise<TurnoGestion |
   const ultimaResuelta = solicitudes.find((s) => s.estado !== "PENDIENTE") ?? null;
 
   const servicios = (turno.appointment_services ?? [])
-    .map((s) => uno(s.services)?.nombre)
+    .map((s) => {
+      const nombre = uno(s.services)?.nombre;
+      return nombre ? nombreServicio(nombre, s.variante_nombre) : null;
+    })
     .filter((n): n is string => Boolean(n));
 
   return {

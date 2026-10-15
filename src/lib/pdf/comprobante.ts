@@ -6,6 +6,8 @@ import path from "path";
 
 import type { Database } from "@/types/database";
 import { formatearPesos } from "@/lib/format";
+import { precioTarjeta } from "@/lib/precios";
+import { nombreServicio } from "@/lib/seleccion";
 import { mostrarFecha } from "@/lib/dates";
 import {
   DIRECCION_NEGOCIO,
@@ -57,6 +59,7 @@ export async function generarPdfComprobante(
       id,
       numero,
       total,
+      estado,
       created_at,
       clients (
         nombre,
@@ -78,8 +81,12 @@ export async function generarPdfComprobante(
     .select(`
       service_id,
       precio_snapshot,
+      variante_nombre,
       services (
         nombre,
+        duracion_min
+      ),
+      service_variants (
         duracion_min
       )
     `)
@@ -88,6 +95,22 @@ export async function generarPdfComprobante(
   if (itemsError) {
     return { ok: false, status: 500, error: "No se pudieron obtener los servicios." };
   }
+
+  const [{ data: pagos }, { data: ajustes }] = await Promise.all([
+    supabase.from("payments").select("monto, monto_base").eq("work_id", workId),
+    supabase.from("business_settings").select("recargo_tarjeta_pct").eq("id", 1).single(),
+  ]);
+
+  const recargoPct = Number(ajustes?.recargo_tarjeta_pct ?? 0);
+  const totalBase = Number(trabajo.total);
+  const cobrado = trabajo.estado === "COBRADO";
+
+  // Con el trabajo cobrado, el recargo es lo que efectivamente se pagó de más con tarjeta.
+  const recargoCobrado = cobrado
+    ? Math.round(
+        (pagos ?? []).reduce((acc, p) => acc + (Number(p.monto) - Number(p.monto_base)), 0) * 100
+      ) / 100
+    : 0;
 
 const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]);
@@ -416,7 +439,7 @@ page.drawLine({
       19;
 
     page.drawText(
-      item.services?.nombre ?? "Servicio",
+      nombreServicio(item.services?.nombre, item.variante_nombre),
       {
         x: tableX + 8,
         y,
@@ -443,7 +466,7 @@ page.drawLine({
 
     page.drawText(
       formatearDuracion(
-        item.services?.duracion_min
+        item.service_variants?.duracion_min ?? item.services?.duracion_min
       ),
       {
         x:
@@ -461,37 +484,78 @@ page.drawLine({
   });
 
   // TOTAL
-  const totalWidth = 150;
+  const totalWidth = 230;
   const totalHeight = 32;
+  const filaAlto = 16;
 
   const totalX =
     tableX + tableWidth - totalWidth;
 
-  const totalY =
-    tableTop -
-    tableHeight -
-    totalHeight -
-    4;
+  // Cobrado con tarjeta: subtotal + recargo = total. Sin cobrar: se informa también el precio con tarjeta.
+  const hayRecargo = recargoCobrado > 0.004;
+  const filasAntes: { etiqueta: string; valor: string }[] = hayRecargo
+    ? [
+        { etiqueta: "Subtotal (efectivo / transferencia)", valor: formatearPesos(totalBase) },
+        { etiqueta: "Recargo por pago con tarjeta", valor: formatearPesos(recargoCobrado) },
+      ]
+    : [];
+  const filasDespues: { etiqueta: string; valor: string }[] =
+    !cobrado && recargoPct > 0
+      ? [
+          {
+            etiqueta: `Con tarjeta (+${recargoPct}%)`,
+            valor: formatearPesos(precioTarjeta(totalBase, recargoPct)),
+          },
+        ]
+      : [];
+  const etiquetaTotal = !cobrado && recargoPct > 0 ? "Total efectivo / transf." : "Total";
+  const valorTotal = hayRecargo ? totalBase + recargoCobrado : totalBase;
+
+  let cursorY = tableTop - tableHeight - 4;
+
+  const dibujarFila = (etiqueta: string, valor: string) => {
+    cursorY -= filaAlto;
+
+    page.drawText(etiqueta, {
+      x: totalX + 14,
+      y: cursorY + 4,
+      size: 8.5,
+      font: regular,
+      color: gris,
+    });
+
+    const anchoValor = regular.widthOfTextAtSize(valor, 8.5);
+
+    page.drawText(valor, {
+      x: totalX + totalWidth - anchoValor - 12,
+      y: cursorY + 4,
+      size: 8.5,
+      font: regular,
+      color: negro,
+    });
+  };
+
+  filasAntes.forEach((fila) => dibujarFila(fila.etiqueta, fila.valor));
+
+  cursorY -= totalHeight;
 
   page.drawRectangle({
     x: totalX,
-    y: totalY,
+    y: cursorY,
     width: totalWidth,
     height: totalHeight,
     color: beige,
   });
 
-  page.drawText("Total", {
+  page.drawText(etiquetaTotal, {
     x: totalX + 14,
-    y: totalY + 11,
+    y: cursorY + 11,
     size: 10,
     font: bold,
     color: negro,
   });
 
-  const totalTexto = formatearPesos(
-    Number(trabajo.total)
-  );
+  const totalTexto = formatearPesos(valorTotal);
 
   const totalWidthText =
     bold.widthOfTextAtSize(totalTexto, 9);
@@ -502,11 +566,13 @@ page.drawLine({
       totalWidth -
       totalWidthText -
       12,
-    y: totalY + 11,
+    y: cursorY + 11,
     size: 9,
     font: bold,
     color: negro,
   });
+
+  filasDespues.forEach((fila) => dibujarFila(fila.etiqueta, fila.valor));
 
   // PIE
 page.drawRectangle({

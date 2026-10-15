@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { uno } from "@/lib/turnos/gestion";
 import { generarPdfComprobante } from "@/lib/pdf/comprobante";
 import { generarPdfPresupuesto } from "@/lib/pdf/presupuesto";
+import { precioTarjeta } from "@/lib/precios";
+import { nombreServicio } from "@/lib/seleccion";
 import type { Database } from "@/types/database";
 import { enviarEmail, registrarEmailLog } from "./enviar";
 import type { TipoEmail } from "./tipos";
@@ -97,9 +99,10 @@ export async function enviarComprobantePorEmail(workId: string): Promise<void> {
     const { data: trabajo } = await admin
       .from("works")
       .select(
-        `id, numero, total, created_at,
+        `id, numero, total, estado, created_at,
          clients ( id, nombre, apellido, email ),
-         work_items ( services ( nombre ) )`
+         work_items ( variante_nombre, services ( nombre ) ),
+         payments ( monto, monto_base )`
       )
       .eq("id", workId)
       .maybeSingle();
@@ -109,8 +112,22 @@ export async function enviarComprobantePorEmail(workId: string): Promise<void> {
     const cliente = uno(trabajo.clients) as Cliente;
     const referencia = `Comprobante N° ${numero4(trabajo.numero)}`;
     const servicios = (trabajo.work_items ?? [])
-      .map((i) => uno(i.services)?.nombre)
+      .map((i) => {
+        const nombre = uno(i.services)?.nombre;
+        return nombre ? nombreServicio(nombre, i.variante_nombre) : null;
+      })
       .filter((n): n is string => Boolean(n));
+
+    // Lo que se pagó de más por usar tarjeta (solo cuando el trabajo ya está cobrado).
+    const recargo =
+      trabajo.estado === "COBRADO"
+        ? Math.round(
+            (trabajo.payments ?? []).reduce(
+              (acc, p) => acc + (Number(p.monto) - Number(p.monto_base)),
+              0
+            ) * 100
+          ) / 100
+        : 0;
 
     const pdf = await generarPdfComprobante(admin, workId);
 
@@ -120,6 +137,7 @@ export async function enviarComprobantePorEmail(workId: string): Promise<void> {
       numero: trabajo.numero,
       fecha: trabajo.created_at,
       total: Number(trabajo.total),
+      recargo,
       servicios,
     });
 
@@ -153,7 +171,7 @@ export async function enviarPresupuestoPorEmail(budgetId: string): Promise<void>
       .select(
         `id, numero, total, notas, created_at,
          clients ( id, nombre, apellido, email ),
-         budget_items ( services ( nombre ) )`
+         budget_items ( variante_nombre, services ( nombre ) )`
       )
       .eq("id", budgetId)
       .maybeSingle();
@@ -163,8 +181,18 @@ export async function enviarPresupuestoPorEmail(budgetId: string): Promise<void>
     const cliente = uno(presupuesto.clients) as Cliente;
     const referencia = `Presupuesto N° ${numero4(presupuesto.numero)}`;
     const servicios = (presupuesto.budget_items ?? [])
-      .map((i) => uno(i.services)?.nombre)
+      .map((i) => {
+        const nombre = uno(i.services)?.nombre;
+        return nombre ? nombreServicio(nombre, i.variante_nombre) : null;
+      })
       .filter((n): n is string => Boolean(n));
+
+    const { data: ajustes } = await admin
+      .from("business_settings")
+      .select("recargo_tarjeta_pct")
+      .eq("id", 1)
+      .single();
+    const recargoPct = Number(ajustes?.recargo_tarjeta_pct ?? 0);
 
     const pdf = await generarPdfPresupuesto(admin, budgetId);
 
@@ -174,6 +202,8 @@ export async function enviarPresupuestoPorEmail(budgetId: string): Promise<void>
       numero: presupuesto.numero,
       fecha: presupuesto.created_at,
       total: Number(presupuesto.total),
+      totalTarjeta: recargoPct > 0 ? precioTarjeta(presupuesto.total, recargoPct) : null,
+      recargoPct,
       servicios,
       notas: presupuesto.notas,
     });
@@ -205,7 +235,7 @@ async function cargarTurno(admin: Admin, turnoId: string) {
     .select(
       `id, numero, codigo, fecha_hora_inicio, token_gestion,
        clients ( id, nombre, apellido, email ),
-       appointment_services ( services ( nombre ) )`
+       appointment_services ( variante_nombre, services ( nombre ) )`
     )
     .eq("id", turnoId)
     .maybeSingle();
@@ -220,7 +250,10 @@ async function cargarTurno(admin: Admin, turnoId: string) {
     inicio: turno.fecha_hora_inicio,
     cliente: uno(turno.clients) as Cliente,
     servicios: (turno.appointment_services ?? [])
-      .map((s) => uno(s.services)?.nombre)
+      .map((s) => {
+        const nombre = uno(s.services)?.nombre;
+        return nombre ? nombreServicio(nombre, s.variante_nombre) : null;
+      })
       .filter((n): n is string => Boolean(n)),
     urlGestion: url ? `${url}/turnos/gestionar/${turno.token_gestion}` : null,
     urlReserva: url ? `${url}/turnos` : null,

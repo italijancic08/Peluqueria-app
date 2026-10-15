@@ -13,6 +13,10 @@ import { mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_PRESUPUESTO } from "@/constants/labels";
 import { etiquetaCliente } from "@/lib/clientes";
 
+import { precioTarjeta } from "@/lib/precios";
+import { obtenerRecargoTarjeta } from "@/lib/recargo";
+import { nombreServicio } from "@/lib/seleccion";
+
 export default async function PresupuestoDetallePage({
   params,
 }: {
@@ -38,6 +42,8 @@ export default async function PresupuestoDetallePage({
     .from("budget_items")
     .select("*, services(nombre)")
     .eq("budget_id", id);
+
+  const recargoPct = await obtenerRecargoTarjeta();
 
   return (
     <div className="space-y-6 max-w-lg">
@@ -82,28 +88,32 @@ export default async function PresupuestoDetallePage({
               className="flex items-center justify-between px-3 py-2 text-sm"
             >
               <span className="text-neutral-700">
-                {item.services?.nombre}
+                {nombreServicio(item.services?.nombre, item.variante_nombre)}
               </span>
 
-              <span className="text-neutral-900">
+              <span className="text-right text-neutral-900">
                 {formatearPesos(
                   item.precio_snapshot
                 )}
+                <span className="block text-xs text-neutral-500">
+                  Tarjeta {formatearPesos(precioTarjeta(item.precio_snapshot, recargoPct))}
+                </span>
               </span>
             </div>
           ))}
         </div>
 
-        <div className="flex items-center justify-between text-sm font-medium pt-1">
-          <span className="text-neutral-700">
-            Total
-          </span>
-
-          <span className="text-neutral-900">
-            {formatearPesos(
-              presupuesto.total
-            )}
-          </span>
+        <div className="space-y-0.5 pt-1 text-sm font-medium">
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total efectivo / transferencia</span>
+            <span className="text-neutral-900">{formatearPesos(presupuesto.total)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total con tarjeta (+{recargoPct}%)</span>
+            <span className="text-neutral-900">
+              {formatearPesos(precioTarjeta(presupuesto.total, recargoPct))}
+            </span>
+          </div>
         </div>
       </div>
 

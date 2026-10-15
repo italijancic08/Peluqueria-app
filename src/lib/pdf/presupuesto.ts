@@ -5,6 +5,8 @@ import fs from "fs";
 import path from "path";
 
 import type { Database } from "@/types/database";
+import { precioTarjeta } from "@/lib/precios";
+import { nombreServicio } from "@/lib/seleccion";
 import {
   DIRECCION_NEGOCIO,
   EMAIL_NEGOCIO,
@@ -85,8 +87,12 @@ export async function generarPdfPresupuesto(
     .select(`
       service_id,
       precio_snapshot,
+      variante_nombre,
       services (
         nombre,
+        duracion_min
+      ),
+      service_variants (
         duracion_min
       )
     `)
@@ -95,6 +101,14 @@ export async function generarPdfPresupuesto(
   if (itemsError) {
     return { ok: false, status: 500, error: "No se pudieron obtener los servicios." };
   }
+
+  const { data: ajustes } = await supabase
+    .from("business_settings")
+    .select("recargo_tarjeta_pct")
+    .eq("id", 1)
+    .single();
+
+  const recargoPct = Number(ajustes?.recargo_tarjeta_pct ?? 0);
 
 const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]);
@@ -309,8 +323,8 @@ page.drawLine({
   const tableTop = 535;
   const tableWidth = 460;
 
-  const serviceWidth = 285;
-  const priceWidth = 82;
+  const serviceWidth = 235;
+  const priceWidth = 130;
   const timeWidth = tableWidth - serviceWidth - priceWidth;
 
   const headerHeight = 42;
@@ -370,7 +384,7 @@ page.drawLine({
   });
 
   page.drawText("Servicio", {
-    x: tableX + 125,
+    x: tableX + 95,
     y: tableTop - 25,
     size: 10,
     font: bold,
@@ -378,7 +392,7 @@ page.drawLine({
   });
 
   page.drawText("Precio", {
-    x: tableX + serviceWidth + 25,
+    x: tableX + serviceWidth + 45,
     y: tableTop - 25,
     size: 10,
     font: bold,
@@ -420,7 +434,7 @@ page.drawLine({
       index * rowHeight -
       18;
 
-    page.drawText(item.services?.nombre ?? "Servicio", {
+    page.drawText(nombreServicio(item.services?.nombre, item.variante_nombre), {
       x: tableX + 8,
       y,
       size: 9,
@@ -429,20 +443,30 @@ page.drawLine({
       maxWidth: serviceWidth - 16,
     });
 
+    // Ambos precios: efectivo/transferencia y tarjeta.
+    page.drawText(`Efect. ${formatearPesos(Number(item.precio_snapshot))}`, {
+      x: tableX + serviceWidth + 8,
+      y: y + 6,
+      size: 7.5,
+      font: regular,
+      color: negro,
+      maxWidth: priceWidth - 12,
+    });
+
     page.drawText(
-      formatearPesos(Number(item.precio_snapshot)),
+      `Tarj. ${formatearPesos(precioTarjeta(item.precio_snapshot, recargoPct))}`,
       {
         x: tableX + serviceWidth + 8,
-        y,
-        size: 8,
+        y: y - 5,
+        size: 7.5,
         font: regular,
-        color: negro,
+        color: gris,
         maxWidth: priceWidth - 12,
       }
     );
 
     page.drawText(
-      formatearDuracion(item.services?.duracion_min),
+      formatearDuracion(item.service_variants?.duracion_min ?? item.services?.duracion_min),
       {
         x:
           tableX +
@@ -458,50 +482,68 @@ page.drawLine({
     );
   });
 
-  // TOTAL
-  const totalWidth = 150;
+  // TOTALES (efectivo/transferencia y tarjeta)
+  const totalWidth = 230;
   const totalHeight = 32;
 
   const totalX =
     tableX + tableWidth - totalWidth;
 
-  const totalY =
-    tableTop - tableHeight - totalHeight - 4;
+  const totalesPresupuesto = [
+    { etiqueta: "Total efectivo / transf.", valor: Number(presupuesto.total) },
+    ...(recargoPct > 0
+      ? [
+          {
+            etiqueta: `Total con tarjeta (+${recargoPct}%)`,
+            valor: precioTarjeta(presupuesto.total, recargoPct),
+          },
+        ]
+      : []),
+  ];
 
-  page.drawRectangle({
-    x: totalX,
-    y: totalY,
-    width: totalWidth,
-    height: totalHeight,
-    color: beige,
+  let totalY = tableTop - tableHeight - 4;
+
+  totalesPresupuesto.forEach((fila) => {
+    totalY -= totalHeight;
+
+    page.drawRectangle({
+      x: totalX,
+      y: totalY,
+      width: totalWidth,
+      height: totalHeight,
+      color: beige,
+    });
+
+    page.drawText(fila.etiqueta, {
+      x: totalX + 14,
+      y: totalY + 11,
+      size: 9,
+      font: bold,
+      color: negro,
+    });
+
+    const totalTexto = formatearPesos(fila.valor);
+
+    const totalTextoWidth =
+      bold.widthOfTextAtSize(totalTexto, 9);
+
+    page.drawText(totalTexto, {
+      x:
+        totalX +
+        totalWidth -
+        totalTextoWidth -
+        12,
+      y: totalY + 11,
+      size: 9,
+      font: bold,
+      color: negro,
+    });
+
+    totalY -= 4;
   });
 
-  page.drawText("Total", {
-    x: totalX + 14,
-    y: totalY + 11,
-    size: 10,
-    font: bold,
-    color: negro,
-  });
-
-  const totalTexto = formatearPesos(
-    Number(presupuesto.total)
-  );
-
-  const totalTextoWidth =
-    bold.widthOfTextAtSize(totalTexto, 9);
-
-  page.drawText(totalTexto, {
-    x:
-      totalX +
-      totalWidth -
-      totalTextoWidth -
-      12,
-    y: totalY + 11,
-    size: 9,
-    font: bold,
-    color: negro,
-  });
+  // Para que las observaciones queden debajo del último total.
+  totalY += 4;
 
   // NOTAS
   if (presupuesto.notas) {

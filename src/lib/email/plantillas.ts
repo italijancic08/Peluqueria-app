@@ -122,8 +122,17 @@ function fechaLarga(iso: string) {
 }
 
 export function plantillaComprobante(
-  d: Base & { numero: number; fecha: string; total: number; servicios: string[] }
+  d: Base & {
+    numero: number;
+    fecha: string;
+    /** Precio en efectivo/transferencia. */
+    total: number;
+    /** Recargo cobrado por pagar con tarjeta (0 si no hubo). */
+    recargo?: number;
+    servicios: string[];
+  }
 ): Plantilla {
+  const recargo = d.recargo ?? 0;
   return {
     asunto: `Tu comprobante N° ${numero(d.numero)} - ${d.nombreNegocio}`,
     html: layout({
@@ -137,7 +146,13 @@ export function plantillaComprobante(
         ...(d.servicios.length
           ? [{ etiqueta: "Servicios", valor: d.servicios.join(", ") }]
           : []),
-        { etiqueta: "Total", valor: formatearPesos(d.total) },
+        ...(recargo > 0
+          ? [
+              { etiqueta: "Subtotal", valor: formatearPesos(d.total) },
+              { etiqueta: "Recargo por pago con tarjeta", valor: formatearPesos(recargo) },
+            ]
+          : []),
+        { etiqueta: "Total", valor: formatearPesos(d.total + recargo) },
       ],
       cierre: "¡Te esperamos pronto!",
     }),
@@ -145,7 +160,17 @@ export function plantillaComprobante(
 }
 
 export function plantillaPresupuesto(
-  d: Base & { numero: number; fecha: string; total: number; servicios: string[]; notas: string | null }
+  d: Base & {
+    numero: number;
+    fecha: string;
+    /** Total en efectivo/transferencia. */
+    total: number;
+    /** Total pagando con tarjeta (null si no hay recargo configurado). */
+    totalTarjeta?: number | null;
+    recargoPct?: number;
+    servicios: string[];
+    notas: string | null;
+  }
 ): Plantilla {
   return {
     asunto: `Tu presupuesto N° ${numero(d.numero)} - ${d.nombreNegocio}`,
@@ -160,7 +185,18 @@ export function plantillaPresupuesto(
         ...(d.servicios.length
           ? [{ etiqueta: "Servicios", valor: d.servicios.join(", ") }]
           : []),
-        { etiqueta: "Total", valor: formatearPesos(d.total) },
+        {
+          etiqueta: d.totalTarjeta ? "Total efectivo / transferencia" : "Total",
+          valor: formatearPesos(d.total),
+        },
+        ...(d.totalTarjeta
+          ? [
+              {
+                etiqueta: `Total con tarjeta (+${d.recargoPct ?? 0}%)`,
+                valor: formatearPesos(d.totalTarjeta),
+              },
+            ]
+          : []),
       ],
       bloque: d.notas ? { titulo: "Observaciones", texto: d.notas } : undefined,
       cierre: "Si querés avanzar o tenés dudas, respondé este mail o comunicate con nosotros.",

@@ -7,9 +7,12 @@ import { IniciarTrabajoButton } from "@/components/trabajos/iniciar-trabajo-butt
 import { FinalizarTrabajoForm } from "@/components/trabajos/finalizar-trabajo-form";
 import { CobrarTrabajoForm } from "@/components/trabajos/cobrar-trabajo-form";
 import { formatearPesos } from "@/lib/format";
+import { precioTarjeta } from "@/lib/precios";
+import { obtenerRecargoTarjeta } from "@/lib/recargo";
 import { mostrarFecha, mostrarFechaHora } from "@/lib/dates";
 import { ESTADO_TRABAJO, MEDIO_PAGO } from "@/constants/labels";
 import { etiquetaCliente } from "@/lib/clientes";
+import { nombreServicio } from "@/lib/seleccion";
 
 export default async function TrabajoDetallePage({
   params,
@@ -28,24 +31,32 @@ export default async function TrabajoDetallePage({
 
   if (!trabajo) notFound();
 
-  const [{ data: items }, { data: productos }, { data: pagos }, { data: trabajosAnteriores }] = await Promise.all([
+  const [
+    { data: items },
+    { data: productos },
+    { data: pagos },
+    { data: trabajosAnteriores },
+    recargoPct,
+  ] = await Promise.all([
     supabase.from("work_items").select("*, services(nombre, tiene_ficha_tecnica)").eq("work_id", id),
     supabase.from("products").select("*").eq("activo", true).order("nombre"),
     supabase.from("payments").select("*").eq("work_id", id),
     supabase
       .from("works")
-      .select("*, work_items(precio_snapshot, ficha_tecnica, services(nombre))")
+      .select("*, work_items(precio_snapshot, ficha_tecnica, variante_nombre, services(nombre))")
       .eq("client_id", trabajo.client_id)
       .neq("id", id)
       .neq("estado", "DISPONIBLE")
       .neq("estado", "CANCELADO")
       .order("created_at", { ascending: false })
       .limit(10),
+    obtenerRecargoTarjeta(),
   ]);
 
-  const totalPagado = (pagos ?? []).reduce((acc, p) => acc + Number(p.monto), 0);
-  const saldoPendiente = Number(trabajo.total) - totalPagado;
-  const esDeudaParcial = trabajo.estado === "FINALIZADO" && totalPagado > 0 && saldoPendiente > 0;
+  // El saldo se mide en precio base (efectivo/transferencia): cada pago cubre "monto_base".
+  const totalCubierto = (pagos ?? []).reduce((acc, p) => acc + Number(p.monto_base), 0);
+  const saldoPendiente = Math.max(0, Math.round((Number(trabajo.total) - totalCubierto) * 100) / 100);
+  const esDeudaParcial = trabajo.estado === "FINALIZADO" && totalCubierto > 0 && saldoPendiente > 0.01;
 
   const itemsConFicha = (items ?? [])
     .filter((it) => (it as any).services?.tiene_ficha_tecnica)
@@ -77,7 +88,9 @@ export default async function TrabajoDetallePage({
           {items?.map((item) => (
             <div key={item.service_id} className="px-3 py-2 text-sm space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-neutral-700">{(item as any).services?.nombre}</span>
+                <span className="text-neutral-700">
+                  {nombreServicio((item as any).services?.nombre, item.variante_nombre)}
+                </span>
                 <span className="text-neutral-900">{formatearPesos(item.precio_snapshot)}</span>
               </div>
               {item.ficha_tecnica && (
@@ -89,9 +102,15 @@ export default async function TrabajoDetallePage({
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between text-sm font-medium pt-1">
-          <span className="text-neutral-700">Total</span>
-          <span className="text-neutral-900">{formatearPesos(trabajo.total)}</span>
+        <div className="space-y-0.5 pt-1 text-sm font-medium">
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total efectivo / transferencia</span>
+            <span className="text-neutral-900">{formatearPesos(trabajo.total)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-neutral-700">Total con tarjeta (+{recargoPct}%)</span>
+            <span className="text-neutral-900">{formatearPesos(precioTarjeta(trabajo.total, recargoPct))}</span>
+          </div>
         </div>
       </div>
 
@@ -101,6 +120,8 @@ export default async function TrabajoDetallePage({
           {pagos.map((p) => (
             <p key={p.id} className="text-sm text-neutral-600">
               {formatearPesos(p.monto)} — {MEDIO_PAGO[p.metodo as keyof typeof MEDIO_PAGO] ?? p.metodo}
+              {Math.abs(Number(p.monto) - Number(p.monto_base)) > 0.005 &&
+                ` (cubre ${formatearPesos(p.monto_base)} del precio en efectivo)`}
             </p>
           ))}
           {esDeudaParcial && (
@@ -138,6 +159,7 @@ export default async function TrabajoDetallePage({
             id={trabajo.id}
             saldoPendiente={saldoPendiente}
             cuentaCorrienteHabilitada={Boolean(trabajo.clients?.cuenta_corriente_habilitada)}
+            recargoPct={recargoPct}
           />
         </div>
       )}
@@ -158,7 +180,7 @@ export default async function TrabajoDetallePage({
             {trabajosAnteriores.map((t) => {
               const tItems = (t as any).work_items ?? [];
               const nombresServicios = tItems
-                .map((it: any) => it.services?.nombre)
+                .map((it: any) => (it.services?.nombre ? nombreServicio(it.services.nombre, it.variante_nombre) : null))
                 .filter(Boolean)
                 .join(", ");
               const fichas = tItems.filter((it: any) => it.ficha_tecnica);

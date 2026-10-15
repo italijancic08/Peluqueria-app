@@ -31,11 +31,11 @@ export default async function TrabajosPage() {
   if (idsFinalizados.length > 0) {
     const { data: pagos } = await supabase
       .from("payments")
-      .select("work_id, monto")
+      .select("work_id, monto_base")
       .in("work_id", idsFinalizados);
 
     for (const p of pagos ?? []) {
-      pagadoPorTrabajo.set(p.work_id, (pagadoPorTrabajo.get(p.work_id) ?? 0) + Number(p.monto));
+      pagadoPorTrabajo.set(p.work_id, (pagadoPorTrabajo.get(p.work_id) ?? 0) + Number(p.monto_base));
     }
   }
 
@@ -69,7 +69,8 @@ export default async function TrabajosPage() {
           <Tbody>
             {trabajos.map((t) => {
               const pagado = pagadoPorTrabajo.get(t.id) ?? 0;
-              const esDeudaParcial = t.estado === "FINALIZADO" && pagado > 0 && pagado < Number(t.total);
+              const esDeudaParcial =
+                t.estado === "FINALIZADO" && pagado > 0 && Number(t.total) - pagado > 0.01;
 
               return (
                 <Tr key={t.id}>

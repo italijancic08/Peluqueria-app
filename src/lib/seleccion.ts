@@ -1,5 +1,14 @@
 import type { ServiceVariant, ServiceWithVariants } from "@/types/models";
 
+/** "Balayage – Pelo largo", o solo el nombre del servicio si no tiene variante. */
+export function nombreServicio(
+  nombre: string | null | undefined,
+  variante?: string | null
+): string {
+  const base = nombre ?? "Servicio";
+  return variante ? `${base} – ${variante}` : base;
+}
+
 /** Variante elegida por servicio: { [id del servicio]: id de la variante }. */
 export type Variantes = Record<string, string>;
 

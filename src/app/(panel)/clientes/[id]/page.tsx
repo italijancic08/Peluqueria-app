@@ -11,6 +11,7 @@ import { RUTAS } from "@/constants/routes";
 import { ESTADO_TRABAJO } from "@/constants/labels";
 import { eliminarCliente } from "@/actions/clients";
 import { etiquetaCliente } from "@/lib/clientes";
+import { nombreServicio } from "@/lib/seleccion";
 
 export default async function ClienteDetallePage({
   params,
@@ -27,7 +28,7 @@ export default async function ClienteDetallePage({
 
   const { data: trabajos } = await supabase
     .from("works")
-    .select("*, work_items(precio_snapshot, ficha_tecnica, services(nombre))")
+    .select("*, work_items(precio_snapshot, ficha_tecnica, variante_nombre, services(nombre))")
     .eq("client_id", id)
     .neq("estado", "DISPONIBLE")
     .neq("estado", "CANCELADO")
@@ -125,7 +126,7 @@ export default async function ClienteDetallePage({
             {trabajos.map((t) => {
               const items = (t as any).work_items ?? [];
               const nombresServicios = items
-                .map((it: any) => it.services?.nombre)
+                .map((it: any) => (it.services?.nombre ? nombreServicio(it.services.nombre, it.variante_nombre) : null))
                 .filter(Boolean)
                 .join(", ");
               const fichas = items.filter((it: any) => it.ficha_tecnica);

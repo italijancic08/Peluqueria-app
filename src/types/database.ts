@@ -921,6 +921,8 @@ export type Database = {
           id: string
           metodo: Database["public"]["Enums"]["payment_method"]
           monto: number
+          monto_base: number
+          recargo_pct: number
           work_id: string
         }
         Insert: {
@@ -930,6 +932,8 @@ export type Database = {
           id?: string
           metodo: Database["public"]["Enums"]["payment_method"]
           monto: number
+          monto_base: number
+          recargo_pct?: number
           work_id: string
         }
         Update: {
@@ -939,6 +943,8 @@ export type Database = {
           id?: string
           metodo?: Database["public"]["Enums"]["payment_method"]
           monto?: number
+          monto_base?: number
+          recargo_pct?: number
           work_id?: string
         }
         Relationships: [
