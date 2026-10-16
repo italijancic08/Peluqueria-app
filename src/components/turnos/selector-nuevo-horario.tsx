@@ -12,9 +12,11 @@ type Props = {
   cargarSlots: (fechaISO: string) => Promise<ActionResult<Slot[]>>;
   value: string | null;
   onChange: (iso: string | null) => void;
+  /** Solo personal: permite elegir cualquier fecha futura. */
+  fechaLibre?: boolean;
 };
 
-export function SelectorNuevoHorario({ cargarSlots, value, onChange }: Props) {
+export function SelectorNuevoHorario({ cargarSlots, value, onChange, fechaLibre = false }: Props) {
   const [fecha, setFecha] = useState(() => hoyISO());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -47,7 +49,7 @@ export function SelectorNuevoHorario({ cargarSlots, value, onChange }: Props) {
     <div className="space-y-4">
       <div>
         <h3 className="mb-2 text-sm font-medium text-[#4A3428]">Elegí la fecha</h3>
-        <SelectorFechaTira value={fecha} onChange={setFecha} />
+        <SelectorFechaTira value={fecha} onChange={setFecha} fechaLibre={fechaLibre} />
       </div>
 
       <div>

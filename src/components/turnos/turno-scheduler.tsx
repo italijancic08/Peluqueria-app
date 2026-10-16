@@ -5,6 +5,7 @@ import { obtenerDisponibilidad } from "@/actions/appointments";
 import { SelectorFechaTira } from "./selector-fecha-tira";
 import { cn } from "@/lib/utils";
 import { hoyISO, mostrarFinEstimado, mostrarHora } from "@/lib/dates";
+import { SelectorFecha } from "@/components/ui/selector-fecha";
 
 type Slot = { horaISO: string; disponible: boolean };
 
@@ -49,7 +50,7 @@ export function TurnoScheduler({ servicioIds, variantes, value, onChange }: Prop
     <div className="space-y-3">
       <div className="space-y-1">
         <label className="text-sm font-medium text-[#4A3428]">Fecha</label>
-        <SelectorFechaTira value={fecha} onChange={setFecha} />
+        <SelectorFechaTira value={fecha} onChange={setFecha} fechaLibre />
       </div>
 
       {servicioIds.length === 0 && (

@@ -3,20 +3,24 @@
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { hoyISO } from "@/lib/dates";
+import { SelectorFecha } from "@/components/ui/selector-fecha";
 
 const DIAS_CORTOS = ["DO", "LU", "MA", "MI", "JU", "VI", "SA"];
 
 type Props = {
   value: string;
   onChange: (fechaISO: string) => void;
+  /** Solo personal: agrega un campo para elegir cualquier fecha, más allá de la tira. */
+  fechaLibre?: boolean;
 };
 
-export function SelectorFechaTira({ value, onChange }: Props) {
+export function SelectorFechaTira({ value, onChange, fechaLibre = false }: Props) {
   // Se arma desde "hoy" en hora Argentina (al mediodía, para evitar saltos por zona horaria)
   const base = new Date(`${hoyISO()}T12:00:00`);
   const dias = Array.from({ length: 14 }, (_, i) => addDays(base, i));
 
   return (
+    <div className="space-y-2">
     <div className="flex gap-2 overflow-x-auto pb-1">
       {dias.map((d) => {
         const iso = format(d, "yyyy-MM-dd");
@@ -38,6 +42,16 @@ export function SelectorFechaTira({ value, onChange }: Props) {
           </button>
         );
       })}
+    </div>
+
+    {fechaLibre && (
+      <div className="flex items-center gap-2">
+        <label className="text-xs text-[#9C8577]">Otra fecha</label>
+        <div className="w-56">
+          <SelectorFecha value={value} min={hoyISO()} onChange={onChange} />
+        </div>
+      </div>
+    )}
     </div>
   );
 }

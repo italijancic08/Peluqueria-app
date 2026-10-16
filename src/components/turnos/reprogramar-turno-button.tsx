@@ -75,6 +75,7 @@ export function ReprogramarTurnoButton({
             cargarSlots={(fecha) => slotsParaTurno(id, fecha)}
             value={slot}
             onChange={setSlot}
+            fechaLibre
           />
 
           <Textarea
