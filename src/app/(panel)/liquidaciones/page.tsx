@@ -4,6 +4,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { LiquidarSemanaButton } from "@/components/liquidaciones/liquidar-semana-button";
 import { MarcarPagadaButton } from "@/components/liquidaciones/marcar-pagada-button";
+import { ComisionManualForm } from "@/components/liquidaciones/comision-manual-form";
 import { formatearPesos } from "@/lib/format";
 import { mostrarFecha, semanaLaboral } from "@/lib/dates";
 
@@ -31,10 +32,14 @@ export default async function LiquidacionesPage() {
     queryLiquidaciones = queryLiquidaciones.eq("profile_id", perfil.id);
   }
 
-  const [{ data: comisionesPendientes }, { data: liquidaciones }] = await Promise.all([
-    queryComisionesPendientes,
-    queryLiquidaciones,
-  ]);
+  const queryEmpleados = supabase
+    .from("profiles")
+    .select("id, nombre, apellido, comision_pct")
+    .eq("activo", true)
+    .order("apellido", { ascending: true });
+
+  const [{ data: comisionesPendientes }, { data: liquidaciones }, { data: empleados }] =
+    await Promise.all([queryComisionesPendientes, queryLiquidaciones, queryEmpleados]);
 
   type PendienteEmpleado = { nombre: string; total: number };
   const pendientesPorEmpleado = new Map<string, PendienteEmpleado>();
@@ -49,9 +54,12 @@ export default async function LiquidacionesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-neutral-900">
-        {perfil.rol === "ADMIN" ? "Liquidaciones" : "Mis liquidaciones"}
-      </h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-neutral-900">
+          {perfil.rol === "ADMIN" ? "Liquidaciones" : "Mis liquidaciones"}
+        </h1>
+        {perfil.rol === "ADMIN" && <ComisionManualForm empleados={empleados ?? []} />}
+      </div>
 
       {perfil.rol === "ADMIN" && (
         <div className="space-y-3">

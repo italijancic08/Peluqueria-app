@@ -760,32 +760,38 @@ export type Database = {
         Row: {
           base_monto: number
           created_at: string
+          descripcion: string | null
+          es_manual: boolean
           id: string
           monto: number
           porcentaje_snapshot: number
           profile_id: string
           settlement_id: string | null
-          work_id: string
+          work_id: string | null
         }
         Insert: {
           base_monto: number
           created_at?: string
+          descripcion?: string | null
+          es_manual?: boolean
           id?: string
           monto: number
           porcentaje_snapshot: number
           profile_id: string
           settlement_id?: string | null
-          work_id: string
+          work_id?: string | null
         }
         Update: {
           base_monto?: number
           created_at?: string
+          descripcion?: string | null
+          es_manual?: boolean
           id?: string
           monto?: number
           porcentaje_snapshot?: number
           profile_id?: string
           settlement_id?: string | null
-          work_id?: string
+          work_id?: string | null
         }
         Relationships: [
           {
@@ -1416,6 +1422,14 @@ export type Database = {
           cobrado: boolean
           total_pagado: number
         }[]
+      }
+      crear_comision_manual: {
+        Args: {
+          p_base_monto: number
+          p_descripcion?: string
+          p_profile_id: string
+        }
+        Returns: string
       }
       equipo_publico: {
         Args: never
