@@ -32,7 +32,7 @@ export function LiquidarSemanaButton({ profileId, semanaInicio, semanaFin }: Pro
     <div className="space-y-1">
       {error && <p className="text-xs text-red-600">{error}</p>}
       <Button onClick={liquidar} disabled={isPending}>
-        {isPending ? "Liquidando..." : "Liquidar esta semana"}
+        {isPending ? "Liquidando..." : "Liquidar pendientes"}
       </Button>
     </div>
   );

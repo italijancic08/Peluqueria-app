@@ -6,15 +6,16 @@ import { LiquidarSemanaButton } from "@/components/liquidaciones/liquidar-semana
 import { MarcarPagadaButton } from "@/components/liquidaciones/marcar-pagada-button";
 import { ComisionManualForm } from "@/components/liquidaciones/comision-manual-form";
 import { formatearPesos } from "@/lib/format";
-import { mostrarFecha, semanaLaboral } from "@/lib/dates";
+import { format } from "date-fns";
+import { hoyISO, mostrarDia, semanaLaboral } from "@/lib/dates";
 
 export default async function LiquidacionesPage() {
   const perfil = await requireAuth();
   const supabase = await createClient();
 
-  const { inicio, fin } = semanaLaboral(new Date());
-  const semanaInicioISO = inicio.toISOString().slice(0, 10);
-  const semanaFinISO = fin.toISOString().slice(0, 10);
+  const { inicio, fin } = semanaLaboral(new Date(`${hoyISO()}T12:00:00`));
+  const semanaInicioISO = format(inicio, "yyyy-MM-dd");
+  const semanaFinISO = format(fin, "yyyy-MM-dd");
 
   let queryComisionesPendientes = supabase
     .from("employee_commissions")
@@ -64,7 +65,7 @@ export default async function LiquidacionesPage() {
       {perfil.rol === "ADMIN" && (
         <div className="space-y-3">
           <h2 className="text-sm font-medium text-neutral-700">
-            Comisiones pendientes — semana {mostrarFecha(semanaInicioISO)} al {mostrarFecha(semanaFinISO)}
+            Comisiones pendientes — semana actual {mostrarDia(semanaInicioISO)} al {mostrarDia(semanaFinISO)}
           </h2>
           {pendientesPorEmpleado.size === 0 && (
             <p className="text-sm text-neutral-500">No hay comisiones pendientes de liquidar.</p>
@@ -113,7 +114,7 @@ export default async function LiquidacionesPage() {
                     </Td>
                   )}
                   <Td>
-                    {mostrarFecha(l.semana_inicio)} — {mostrarFecha(l.semana_fin)}
+                    {mostrarDia(l.semana_inicio)} — {mostrarDia(l.semana_fin)}
                   </Td>
                   <Td>{formatearPesos(l.total)}</Td>
                   <Td>

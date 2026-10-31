@@ -13,6 +13,11 @@ export function mostrarFechaHora(fecha: string | Date): string {
   return mostrarFecha(fecha, "dd/MM/yyyy HH:mm");
 }
 
+/** Fecha sin hora (yyyy-MM-dd) → dd/MM/yyyy, sin corrimiento de día por zona horaria. */
+export function mostrarDia(fecha: string): string {
+  return formatInTimeZone(new Date(`${fecha.slice(0, 10)}T12:00:00Z`), ZONA, "dd/MM/yyyy");
+}
+
 export function mostrarHora(fecha: string | Date): string {
   return mostrarFecha(fecha, "HH:mm");
 }
